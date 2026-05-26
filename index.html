@@ -98,6 +98,7 @@ h1 span { color:var(--accent); }
 
 /* ── Seat cards ── */
 .seat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:1.5rem; }
+.seat-grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:1.5rem; }
 .seat-card { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:18px; transition:border-color .2s; }
 .seat-card.custom-on { border-color:var(--accent-border); border-width:1.5px; }
 .seat-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
@@ -256,8 +257,7 @@ footer { margin-top:60px; padding-top:20px; border-top:0.5px solid var(--border)
 
   <div class="section">
     <div class="section-header">Configure seats</div>
-    <div class="seat-grid">
-      <div class="seat-card" id="s-card-std">
+    <div class="seat-grid-4">      <div class="seat-card" id="s-card-std">
         <div class="seat-top">
           <div><div class="seat-name">Standard</div><div class="seat-code">BCCSTN</div></div>
           <span class="custom-pill" id="s-badge-std">custom</span>
