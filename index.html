@@ -441,6 +441,56 @@ footer {
   flex-wrap: wrap;
   gap: 8px;
 }
+
+.partner-bar {
+  background: var(--surface);
+  border: 0.5px solid var(--accent-border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  margin-bottom: 28px;
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.partner-bar .ctrl-group { flex: 1; min-width: 200px; }
+.partner-select {
+  width: 100%;
+  background: var(--surface2);
+  border: 0.5px solid var(--border2);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  padding: 8px 12px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color .15s;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+}
+.partner-select:focus { border-color: var(--accent); }
+.partner-select option { background: #1f2435; }
+.partner-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; min-height: 26px; }
+.pchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 0.5px solid var(--accent-border);
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+.pchip .pchip-rate { opacity: .75; font-size: 11px; }
+.pchip-none { color: var(--muted); font-size: 12px; font-style: italic; }
+
 </style>
 </head>
 <body>
@@ -453,6 +503,25 @@ footer {
       <div class="subtitle">Hosted voice &mdash; comp, SPIF &amp; profitability</div>
     </div>
   </header>
+
+  <div class="partner-bar">
+    <div class="ctrl-group" style="flex:2;min-width:260px">
+      <div class="ctrl-label">Sold through partner</div>
+      <select class="partner-select" id="partner-select" onchange="onPartnerChange()">
+        <option value="">— Select partner —</option>
+      </select>
+    </div>
+    <div class="ctrl-group" style="flex:1;min-width:160px">
+      <div class="ctrl-label">Product type</div>
+      <select class="partner-select" id="term-select" onchange="onTermChange()">
+        <option value="">— Select partner first —</option>
+      </select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+      <div class="ctrl-label">Partner comp rate</div>
+      <div class="partner-chips" id="partner-chips"><span class="pchip-none">No partner selected</span></div>
+    </div>
+  </div>
 
   <div class="controls-bar">
     <div class="ctrl-group">
@@ -626,7 +695,7 @@ footer {
 
   <footer>
     <span>Commission rate: 22% &nbsp;&bull;&nbsp; CFM cost: $0</span>
-    <span>Verdicts: &lt;10% does not make sense &nbsp;&bull;&nbsp; 10–20% strategic &nbsp;&bull;&nbsp; 20–30% aggressive &nbsp;&bull;&nbsp; 30%+ healthy</span>
+    <span>Verdicts: &lt;25% needs review &nbsp;&bull;&nbsp; 25–28% aggressive &nbsp;&bull;&nbsp; 28%+ healthy</span>
   </footer>
 
 </div>
@@ -639,6 +708,7 @@ const SEATS = [
   {key:'cfm', name:'Call flow mgr',    code:'BCCCFM', std12:12.95, std36:9.95,  icb12:4.95,  icb36:4.95,  cost:0.00},
 ];
 const CR = 0.22;
+let commissionRate = 0.22;
 let term = 36, icb = false;
 
 function bookMRC(s) { return icb ? (term===12 ? s.icb12 : s.icb36) : (term===12 ? s.std12 : s.std36); }
@@ -650,9 +720,8 @@ function fmt(n) { return '$' + Math.abs(n).toLocaleString('en-US', {minimumFract
 function pct(n) { return (n * 100).toFixed(1) + '%'; }
 
 function verdict(m) {
-  if (m < 0.10) return {label:'Does not make sense', cls:'v-bad'};
-  if (m < 0.20) return {label:'Strategic only',       cls:'v-strat'};
-  if (m < 0.30) return {label:'Aggressive',           cls:'v-agg'};
+  if (m < 0.25) return {label:'Needs review', cls:'v-bad'};
+  if (m < 0.28) return {label:'Aggressive',   cls:'v-agg'};
   return {label:'Healthy', cls:'v-good'};
 }
 
@@ -687,7 +756,7 @@ function calcDeal(spifMult) {
   let totMRC=0, totProfit=0, totSpif=0, totComm=0;
   SEATS.forEach(s => {
     const q = getQty(s.key); if (!q) return;
-    const m = effectiveMRC(s), comm = m * CR, profit = (m - s.cost - comm) * q * term;
+    const m = effectiveMRC(s), comm = m * commissionRate, profit = (m - s.cost - comm) * q * term;
     totMRC += m * q; totProfit += profit; totSpif += m * spifMult * q; totComm += comm * q;
   });
   const remaining = totProfit - totSpif;
@@ -732,7 +801,7 @@ function render() {
   const active = SEATS.filter(s => getQty(s.key) > 0);
   let rows = '', totM=0, totC=0, totDP=0, totSP=0, totR=0;
   active.forEach(s => {
-    const q=getQty(s.key), m=effectiveMRC(s), comm=m*CR, mp=m-s.cost-comm;
+    const q=getQty(s.key), m=effectiveMRC(s), comm=m*commissionRate, mp=m-s.cost-comm;
     const dp=mp*q*term, sp=m*spifMult*q, rem=dp-sp;
     const margin = m*q*term > 0 ? rem/(m*q*term) : 0;
     const vv = verdict(margin);
@@ -777,6 +846,56 @@ function render() {
 
 updateBookRates();
 render();
+
+// ── Partner data ──
+const PARTNERS = {"BGD Communications (223)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "CORE Communications (225)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "P2/AppSmart (109)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Alpha Delta Inc (240)": [{"t": "One Year", "r": 10}, {"t": "Multi Year", "r": 18}], "Ted Lagala (227)": [{"t": "Multi Year", "r": 14}, {"t": "One Year", "r": 12}], "Hogan Communications (99)": [{"t": "Multi Year", "r": 8}, {"t": "One Year", "r": 8}], "Elaine White (21)": [{"t": "Multi Year", "r": 8}, {"t": "One Year", "r": 8}], "ARD (56)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "BT - Telecom (202)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Kevin Foley (64)": [{"t": "Multi Year", "r": 0}, {"t": "One Year", "r": 0}], "Steve Gibbs (69)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Veripoint (59)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Advantage Wireless (200)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Geroge Mont (11)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "SAM - Penske (84)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Global Tel (147)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "United Telecom (53)": [{"t": "Multi Year", "r": 8}, {"t": "One Year", "r": 8}], "Steve Luke (43)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "Stephen DePaula (199)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Deborah Noonan (156)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "Robert Darcy (83)": [{"t": "Multi Year", "r": 0}, {"t": "One Year", "r": 0}], "KZ Telecom (151)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Colson Communications (229)": [{"t": "Multi Year", "r": 5}, {"t": "One Year", "r": 5}], "Convergent Telecom/Bill Heinemann (8)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "Rondilo (86)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Bluewave (81)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "HVC TELECOM LLC (76)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Brad Fackler (111)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "JB (189)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "CDP/Sandler (101)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Rob Kilkowski (28)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Votacall (106)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "DO NOT USE (96)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Tele-Dynamics (75)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "Jim Allan (231)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "A&A Consulting (226)": [{"t": "Multi Year", "r": 12}, {"t": "One Year", "r": 10}], "Sharon Lorino (65)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "House Account (22)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "TDS Inc (95)": [{"t": "Multi Year", "r": 8}, {"t": "One Year", "r": 8}], "Kevin Nee (12)": [{"t": "Multi Year", "r": 15}, {"t": "One Year", "r": 15}], "Telequest (80)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Little Family Holdings, LLC (181)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Independent Business Communication (98)": [{"t": "Multi Year", "r": 8}, {"t": "One Year", "r": 8}], "World Telecom/Adam Walter (93)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "Sean Kelly/CBE (50)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "Harbor Networks (Boston Wireless) (201)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "EB (191)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Steve Cho (40)": [{"t": "Multi Year", "r": 12}, {"t": "One Year", "r": 10}], "Sherman Networks (113)": [{"t": "Multi Year", "r": 8}, {"t": "One Year", "r": 8}], "First Light Management (170)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Infinite Telecom (97)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "House (87)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Integrated Solutions (92)": [{"t": "Multi Year", "r": 8}, {"t": "One Year", "r": 8}], "World Technologies Inc/Tom Duncan (4)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "NuSound (82)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "NEAT Communications (77)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "Telecom Consultants, LLP (117)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "APC Services (190)": [{"t": "Multi Year", "r": 17}, {"t": "One Year", "r": 17}], "Bernie Talkow (112)": [{"t": "Multi Year", "r": 8}, {"t": "One Year", "r": 8}], "J&L Mgmt/John Giblo (39)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "AmpliX (107)": [{"t": "Multi Year", "r": 25}, {"t": "One Year", "r": 25}], "3D Advantage (185)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Garrett Douglas (47)": [{"t": "Multi Year", "r": 8}, {"t": "One Year", "r": 8}], "CRA Telecom (188)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "Rod MacKenzie (27)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "FSJN Net (228)": [{"t": "Multi Year", "r": 12}, {"t": "One Year", "r": 10}], "Diversified Telecom Group (239)": [{"t": "Multi Year", "r": 10}], "CMC Technology Group (222)": [{"t": "Multi Year", "r": 0}, {"t": "One Year", "r": 0}], "ACE Technology Advisors, LLC (232)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Strategic Partners Communications, Inc (246)": [{"t": "One Year", "r": 0}, {"t": "Multi Year", "r": 0}], "G&G Solutions (270)": [{"t": "One Year", "r": 10}, {"t": "Multi Year", "r": 10}], "Crosstar Network Solutions (247)": [{"t": "Multi Year", "r": 23}, {"t": "One Year", "r": 23}], "DO NOT USE (257)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 22}], "Jack Collins/Unity Communications (250)": [{"t": "Multi Year", "r": 8}], "John King/Teligence (271)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Tilden Associates (259)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "SchulzLB (269)": [{"t": "One Year", "r": 15}, {"t": "Multi Year", "r": 18}], "Eric Hammare (277)": [{"t": "One Year", "r": 5}, {"t": "Multi Year", "r": 5}], "J Fallon Inc (284)": [{"t": "One Year", "r": 10}, {"t": "Multi Year", "r": 10}], "CDP-SNUG/Sandler (272)": [{"t": "One Year", "r": 20}, {"t": "Multi Year", "r": 20}], "Peleton Systems (249)": [{"t": "One Year", "r": 18}, {"t": "Multi Year", "r": 18}], "Next Generations Communications (251)": [{"t": "One Year", "r": 18}, {"t": "Multi Year", "r": 18}], "BSTM, LLC (186)": [{"t": "One Year", "r": 5}, {"t": "Multi Year", "r": 5}], "Spencer Hill Communications (278)": [{"t": "One Year", "r": 10}, {"t": "Multi Year", "r": 10}], "Optimized Communications Corp (290)": [{"t": "One Year", "r": 10}, {"t": "Multi Year", "r": 10}], "Cutting Edge Technologies (298)": [{"t": "One Year", "r": 15}, {"t": "Multi Year", "r": 15}], "Zeus Communicaitons (285)": [{"t": "One Year", "r": 10}, {"t": "Multi Year", "r": 10}], "Colligio - SK (273)": [{"t": "One Year", "r": 18}, {"t": "Multi Year", "r": 18}], "Jodi Colbourn (303)": [{"t": "One Year", "r": 14}, {"t": "Multi Year", "r": 14}], "MMG Communications (305)": [{"t": "One Year", "r": 10}, {"t": "Multi Year", "r": 10}], "Titanium Communications (304)": [{"t": "One Year", "r": 14}, {"t": "Multi Year", "r": 14}], "Princeton Hosted Solutions (311)": [{"t": "One Year", "r": 0}, {"t": "Multi Year", "r": 0}], "Align (300)": [{"t": "One Year", "r": 0}, {"t": "Multi Year", "r": 0}], "Lyn Zarella (315)": [{"t": "One Year", "r": 18}, {"t": "Multi Year", "r": 18}], "Innovative Technology Solutions (314)": [{"t": "One Year", "r": 18}, {"t": "Multi Year", "r": 18}], "GCC (320)": [{"t": "One Year", "r": 18}, {"t": "Multi Year", "r": 18}], "Master Group USA, LLC dba SarcoTel (313)": [{"t": "Multi Year", "r": 0}, {"t": "One Year", "r": 0}], "APEX Communications (316)": [{"t": "Multi Year", "r": 17}, {"t": "One Year", "r": 17}], "Colligio - LG (274)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Phillip Berta (295)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "North Atlantic Consultants (330)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "DO NOT USE (328)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 22}], "Diane Wassel (324)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "DO NOT USE (332)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 24}], "Happy Valley (334)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Acada Communications (333)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Whitecap Technologies (335)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "TJD Consulting (344)": [{"t": "Multi Year", "r": 15}, {"t": "One Year", "r": 15}], "MacroNet, LLC (347)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 16}], "RJR Communications LLC (343)": [{"t": "Multi Year", "r": 18}], "Lindsay McGrath (345)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 15}], "Shane Senior (341)": [{"t": "Multi Year", "r": 15}, {"t": "One Year", "r": 15}], "allConnex - AmpliX (348)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Datamart Inc (349)": [{"t": "Multi Year", "r": 18}], "UPSTACK - DVP Tech (350)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "AMD (354)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "Net7 - AmpliX (355)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 15}], "Syscom USA (308)": [{"t": "Multi Year", "r": 0}, {"t": "One Year", "r": 0}], "Connecticut Communications (342)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 16}], "Aurora Comm/Sandler (357)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Systems Engineering, Inc (359)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 15}], "Jason Rondeau (362)": [{"t": "Multi Year", "r": 20}], "Revolutionary Technologies (365)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "TeamLogicIT (366)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Uptime Communications (369)": [{"t": "Multi Year", "r": 18}], "SmartFiber (370)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 15}], "Axis Business Solutions (346)": [{"t": "Multi Year", "r": 14}, {"t": "One Year", "r": 14}], "ValuLink (371)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Evycom, LLC (367)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Tel-Data Systems (374)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 15}], "Ben Hart/Vive Communications (372)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 15}], "Pete Gautreau/Vive Communications (373)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 15}], "TechChoice (364)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 16}], "Holltel Communications (375)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 15}], "Vive Communications (378)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Enterprise Projects LLC (379)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "DO NOT USE Dictronics, Inc (380)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 15}], "Dion Hines (381)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 15}], "Corporate Power Inc (383)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 15}], "Perssignia (382)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 15}], "Teledomani (233)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 19}], "Choice Communications (384)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Telosan (385)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 18}], "One Connect Inc (386)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 15}], "Comtel Group (391)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 22}], "TBI (395)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 22}], "PM Technology Inc (390)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Telco Holdings, Inc. (394)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 18}], "OnDemand (401)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 15}], "World Radio Telecommunications (407)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 16}], "Lancaster Communications Group (408)": [{"t": "One Year", "r": 18}, {"t": "Multi Year", "r": 22}], "Jewell Network Consulting (406)": [{"t": "One Year", "r": 16}, {"t": "Multi Year", "r": 18}], "PGH Networks (405)": [{"t": "One Year", "r": 20}, {"t": "Multi Year", "r": 16}], "Telarus (410)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 24}], "MoJo Consulting (403)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "All In One Telecom Services (411)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 20}], "AppSmart Agent Services (412)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 20}], "Chorus Communications (413)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 20}], "Computer Fellows (414)": [{"t": "Multi Year", "r": 16}, {"t": "One Year", "r": 16}], "Eastern Telephone and Telecommunications (ET&T) (416)": [{"t": "Multi Year", "r": 16}], "IITS Consulting (417)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 16}], "Hosted Telecom Solutions, Inc (393)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 15}], "Phone Check Inc (418)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Barfield Information Systems & Services Inc (BISS) (419)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Prospeed (396)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 15}], "NetLogix (392)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Method One Communications (415)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 16}], "ACS Services (420)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 15}], "Eddie Kane (422)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 18}], "Desktop Guerrillas (421)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 18}], "CIS Technical Services (423)": [{"t": "Multi Year", "r": 15}, {"t": "One Year", "r": 14}], "Hometown Telecom (424)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "USTelecenters (425)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 18}], "ITS Interactive Telecom Solutions (409)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 16}], "Metro Telecom (427)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 18}], "MD IP Solutions, LLC (426)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Advanced Telecom (430)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 18}], "Association Resource Group (ARG) (431)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 22}], "Global Communications Group, Inc. (GCG) (432)": [{"t": "One Year", "r": 22}, {"t": "Multi Year", "r": 22}], "Emendee Technologies (429)": [{"t": "Multi Year", "r": 16}, {"t": "One Year", "r": 14}], "I-Tech (301)": [{"t": "Multi Year", "r": 5}, {"t": "One Year", "r": 5}], "Telarus (OLD) (428)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 24}], "Avant - IP Stack (433)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 14}], "C2 (437)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 22}], "Intelisys (438)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 20}], "Cloud Concepts (440)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Avant (441)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 20}], "Gotham Cloud Inc (439)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Microcorp/AppSmart (442)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 22}], "Sandler Partners (445)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 24}], "Bridgepointe (451)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 24}], "Technology Source (452)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 24}], "Orkestra (454)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Global Telecom Solutions (GTS) (450)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 20}], "TCC (58)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 22}], "Mohawk Com/Ray Sullivan (20)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 22}], "Telecom Co-Op (456)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Digital Management Solutions (461)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 21}], "Patriot Technology Services (462)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "The Sagent Group (455)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 24}], "Bob Jr-APC (466)": [{"t": "Multi Year", "r": 17}, {"t": "One Year", "r": 17}], "Top Cloud Partners, LLC (467)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 22}], "Innovative Business (469)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 24}]};
+const PARTNER_NAMES = ["3D Advantage (185)", "A&A Consulting (226)", "ACE Technology Advisors, LLC (232)", "ACS Services (420)", "AMD (354)", "APC Services (190)", "APEX Communications (316)", "ARD (56)", "Acada Communications (333)", "Advanced Telecom (430)", "Advantage Wireless (200)", "Align (300)", "All In One Telecom Services (411)", "Alpha Delta Inc (240)", "AmpliX (107)", "AppSmart Agent Services (412)", "Association Resource Group (ARG) (431)", "Aurora Comm/Sandler (357)", "Avant (441)", "Avant - IP Stack (433)", "Axis Business Solutions (346)", "BGD Communications (223)", "BSTM, LLC (186)", "BT - Telecom (202)", "Barfield Information Systems & Services Inc (BISS) (419)", "Ben Hart/Vive Communications (372)", "Bernie Talkow (112)", "Bluewave (81)", "Bob Jr-APC (466)", "Brad Fackler (111)", "Bridgepointe (451)", "C2 (437)", "CDP-SNUG/Sandler (272)", "CDP/Sandler (101)", "CIS Technical Services (423)", "CMC Technology Group (222)", "CORE Communications (225)", "CRA Telecom (188)", "Choice Communications (384)", "Chorus Communications (413)", "Cloud Concepts (440)", "Colligio - LG (274)", "Colligio - SK (273)", "Colson Communications (229)", "Computer Fellows (414)", "Comtel Group (391)", "Connecticut Communications (342)", "Convergent Telecom/Bill Heinemann (8)", "Corporate Power Inc (383)", "Crosstar Network Solutions (247)", "Cutting Edge Technologies (298)", "DO NOT USE (257)", "DO NOT USE (328)", "DO NOT USE (332)", "DO NOT USE (96)", "DO NOT USE Dictronics, Inc (380)", "Datamart Inc (349)", "Deborah Noonan (156)", "Desktop Guerrillas (421)", "Diane Wassel (324)", "Digital Management Solutions (461)", "Dion Hines (381)", "Diversified Telecom Group (239)", "EB (191)", "Eastern Telephone and Telecommunications (ET&T) (416)", "Eddie Kane (422)", "Elaine White (21)", "Emendee Technologies (429)", "Enterprise Projects LLC (379)", "Eric Hammare (277)", "Evycom, LLC (367)", "FSJN Net (228)", "First Light Management (170)", "G&G Solutions (270)", "GCC (320)", "Garrett Douglas (47)", "Geroge Mont (11)", "Global Communications Group, Inc. (GCG) (432)", "Global Tel (147)", "Global Telecom Solutions (GTS) (450)", "Gotham Cloud Inc (439)", "HVC TELECOM LLC (76)", "Happy Valley (334)", "Harbor Networks (Boston Wireless) (201)", "Hogan Communications (99)", "Holltel Communications (375)", "Hometown Telecom (424)", "Hosted Telecom Solutions, Inc (393)", "House (87)", "House Account (22)", "I-Tech (301)", "IITS Consulting (417)", "ITS Interactive Telecom Solutions (409)", "Independent Business Communication (98)", "Infinite Telecom (97)", "Innovative Business (469)", "Innovative Technology Solutions (314)", "Integrated Solutions (92)", "Intelisys (438)", "J Fallon Inc (284)", "J&L Mgmt/John Giblo (39)", "JB (189)", "Jack Collins/Unity Communications (250)", "Jason Rondeau (362)", "Jewell Network Consulting (406)", "Jim Allan (231)", "Jodi Colbourn (303)", "John King/Teligence (271)", "KZ Telecom (151)", "Kevin Foley (64)", "Kevin Nee (12)", "Lancaster Communications Group (408)", "Lindsay McGrath (345)", "Little Family Holdings, LLC (181)", "Lyn Zarella (315)", "MD IP Solutions, LLC (426)", "MMG Communications (305)", "MacroNet, LLC (347)", "Master Group USA, LLC dba SarcoTel (313)", "Method One Communications (415)", "Metro Telecom (427)", "Microcorp/AppSmart (442)", "MoJo Consulting (403)", "Mohawk Com/Ray Sullivan (20)", "NEAT Communications (77)", "Net7 - AmpliX (355)", "NetLogix (392)", "Next Generations Communications (251)", "North Atlantic Consultants (330)", "NuSound (82)", "OnDemand (401)", "One Connect Inc (386)", "Optimized Communications Corp (290)", "Orkestra (454)", "P2/AppSmart (109)", "PGH Networks (405)", "PM Technology Inc (390)", "Patriot Technology Services (462)", "Peleton Systems (249)", "Perssignia (382)", "Pete Gautreau/Vive Communications (373)", "Phillip Berta (295)", "Phone Check Inc (418)", "Princeton Hosted Solutions (311)", "Prospeed (396)", "RJR Communications LLC (343)", "Revolutionary Technologies (365)", "Rob Kilkowski (28)", "Robert Darcy (83)", "Rod MacKenzie (27)", "Rondilo (86)", "SAM - Penske (84)", "Sandler Partners (445)", "SchulzLB (269)", "Sean Kelly/CBE (50)", "Shane Senior (341)", "Sharon Lorino (65)", "Sherman Networks (113)", "SmartFiber (370)", "Spencer Hill Communications (278)", "Stephen DePaula (199)", "Steve Cho (40)", "Steve Gibbs (69)", "Steve Luke (43)", "Strategic Partners Communications, Inc (246)", "Syscom USA (308)", "Systems Engineering, Inc (359)", "TBI (395)", "TCC (58)", "TDS Inc (95)", "TJD Consulting (344)", "TeamLogicIT (366)", "TechChoice (364)", "Technology Source (452)", "Ted Lagala (227)", "Tel-Data Systems (374)", "Telarus (410)", "Telarus (OLD) (428)", "Telco Holdings, Inc. (394)", "Tele-Dynamics (75)", "Telecom Co-Op (456)", "Telecom Consultants, LLP (117)", "Teledomani (233)", "Telequest (80)", "Telosan (385)", "The Sagent Group (455)", "Tilden Associates (259)", "Titanium Communications (304)", "Top Cloud Partners, LLC (467)", "UPSTACK - DVP Tech (350)", "USTelecenters (425)", "United Telecom (53)", "Uptime Communications (369)", "ValuLink (371)", "Veripoint (59)", "Vive Communications (378)", "Votacall (106)", "Whitecap Technologies (335)", "World Radio Telecommunications (407)", "World Technologies Inc/Tom Duncan (4)", "World Telecom/Adam Walter (93)", "Zeus Communicaitons (285)", "allConnex - AmpliX (348)"];
+
+
+(function buildPartnerDropdown() {
+  const sel = document.getElementById('partner-select');
+  PARTNER_NAMES.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    sel.appendChild(opt);
+  });
+})();
+
+function onPartnerChange() {
+  const name = document.getElementById('partner-select').value;
+  const termSel = document.getElementById('term-select');
+  termSel.innerHTML = '';
+  if (!name) {
+    termSel.innerHTML = '<option value="">— Select partner first —</option>';
+    document.getElementById('partner-chips').innerHTML = '<span class="pchip-none">No partner selected</span>';
+    return;
+  }
+  const opts = PARTNERS[name] || [];
+  opts.forEach(o => {
+    const el = document.createElement('option');
+    el.value = JSON.stringify(o);
+    el.textContent = (o.t === 'Multi Year' ? '36-month (Multi Year)' : '12-month (One Year)');
+    termSel.appendChild(el);
+  });
+  onTermChange();
+}
+
+function onTermChange() {
+  const termSel = document.getElementById('term-select');
+  const val = termSel.value;
+  if (!val) return;
+  const o = JSON.parse(val);
+  const newTerm = o.t === 'Multi Year' ? 36 : 12;
+  term = newTerm;
+  document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('active', +b.dataset.t === newTerm));
+  commissionRate = o.r / 100;
+  document.getElementById('partner-chips').innerHTML =
+    `<span class="pchip">${o.r}% comp rate <span class="pchip-rate">&bull; ${o.t === 'Multi Year' ? '36m' : '12m'} term</span></span>`;
+  updateBookRates();
+  render();
+}
+
 </script>
 </body>
 </html>
