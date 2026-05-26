@@ -7,646 +7,496 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+
 :root {
-  --bg: #0f1117;
-  --surface: #181c26;
-  --surface2: #1f2435;
-  --border: rgba(255,255,255,0.07);
-  --border2: rgba(255,255,255,0.12);
-  --text: #e8eaf0;
-  --muted: #6b7280;
-  --accent: #4f7fff;
-  --accent-dim: rgba(79,127,255,0.12);
-  --accent-border: rgba(79,127,255,0.35);
-  --green: #22c55e;
-  --green-dim: rgba(34,197,94,0.12);
-  --amber: #f59e0b;
-  --amber-dim: rgba(245,158,11,0.12);
-  --blue: #3b82f6;
-  --blue-dim: rgba(59,130,246,0.12);
-  --red: #ef4444;
-  --red-dim: rgba(239,68,68,0.12);
-  --font: 'DM Sans', sans-serif;
-  --mono: 'DM Mono', monospace;
-  --radius: 10px;
-  --radius-lg: 14px;
+  --bg: #0f1117; --surface: #181c26; --surface2: #1f2435;
+  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+  --text: #e8eaf0; --muted: #6b7280;
+  --accent: #4f7fff; --accent-dim: rgba(79,127,255,0.12); --accent-border: rgba(79,127,255,0.35);
+  --green: #22c55e; --green-dim: rgba(34,197,94,0.10); --green-border: rgba(34,197,94,0.25);
+  --amber: #f59e0b; --amber-dim: rgba(245,158,11,0.10); --amber-border: rgba(245,158,11,0.25);
+  --blue: #3b82f6; --blue-dim: rgba(59,130,246,0.10); --blue-border: rgba(59,130,246,0.25);
+  --red: #ef4444; --red-dim: rgba(239,68,68,0.10); --red-border: rgba(239,68,68,0.25);
+  --font: 'DM Sans', sans-serif; --mono: 'DM Mono', monospace;
+  --radius: 10px; --radius-lg: 14px;
 }
-
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.6; min-height: 100vh; }
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font);
-  font-size: 14px;
-  line-height: 1.6;
-  min-height: 100vh;
-}
+/* ── Nav ── */
+.app-nav { position:fixed; top:0; left:0; right:0; height:48px; background:rgba(15,17,23,0.94); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border-bottom:0.5px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 24px; z-index:1000; }
+.nav-brand { font-size:11px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+.nav-brand span { color:var(--accent); }
+.nav-right { display:flex; align-items:center; gap:12px; }
+.nav-mode { display:flex; background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.nav-mode button { padding:5px 16px; border:none; background:transparent; color:var(--muted); font-family:var(--font); font-size:12px; font-weight:500; cursor:pointer; transition:all .15s; }
+.nav-mode button.active { background:var(--accent); color:#fff; }
+.nav-lock-btn { padding:5px 12px; border:0.5px solid var(--border); border-radius:var(--radius); background:transparent; color:var(--muted); font-family:var(--font); font-size:12px; cursor:pointer; transition:all .15s; display:none; }
+.nav-lock-btn:hover { color:var(--text); }
+.nav-lock-btn.vis { display:block; }
 
-.page {
-  max-width: 980px;
-  margin: 0 auto;
-  padding: 48px 24px 80px;
-}
+/* ── Lock screen ── */
+#view-lock { position:fixed; inset:0; background:var(--bg); z-index:900; display:none; align-items:center; justify-content:center; }
+#view-lock.show { display:flex; }
+.lock-card { background:var(--surface); border:0.5px solid var(--border2); border-radius:var(--radius-lg); padding:40px 44px; width:100%; max-width:360px; text-align:center; }
+.lock-icon { font-size:32px; margin-bottom:14px; }
+.lock-title { font-size:20px; font-weight:300; letter-spacing:-.02em; margin-bottom:6px; }
+.lock-sub { font-size:13px; color:var(--muted); margin-bottom:26px; }
+.lock-input { width:100%; background:var(--surface2); border:0.5px solid var(--border2); border-radius:var(--radius); color:var(--text); font-family:var(--font); font-size:15px; padding:10px 14px; text-align:center; letter-spacing:.15em; outline:none; margin-bottom:10px; transition:border-color .15s; }
+.lock-input:focus { border-color:var(--accent); }
+.lock-input.err { border-color:var(--red) !important; animation:shake .3s; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+.lock-btn { width:100%; padding:10px; background:var(--accent); border:none; border-radius:var(--radius); color:#fff; font-family:var(--font); font-size:14px; font-weight:500; cursor:pointer; transition:opacity .15s; }
+.lock-btn:hover { opacity:.85; }
+.lock-err { font-size:12px; color:var(--red); margin-top:8px; min-height:18px; }
 
-header {
-  margin-bottom: 40px;
-  border-bottom: 0.5px solid var(--border);
-  padding-bottom: 28px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-}
+/* ── Views ── */
+#view-sales, #view-admin { display:none; }
+.page { padding-top:72px; padding-left:24px; padding-right:24px; padding-bottom:80px; margin:0 auto; }
+.page-narrow { max-width:800px; }
+.page-wide { max-width:1020px; }
 
-.logo {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
+/* ── Partner bar ── */
+.partner-bar { background:var(--surface); border:0.5px solid var(--accent-border); border-radius:var(--radius-lg); padding:18px 20px; margin-bottom:28px; display:flex; gap:20px; align-items:flex-end; flex-wrap:wrap; }
+.partner-bar .ctrl-group { flex:1; min-width:200px; }
+.partner-select { width:100%; background:var(--surface2); border:0.5px solid var(--border2); border-radius:var(--radius); color:var(--text); font-family:var(--font); font-size:13px; padding:8px 30px 8px 12px; outline:none; cursor:pointer; transition:border-color .15s; appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; }
+.partner-select:focus { border-color:var(--accent); }
+.partner-select option { background:#1f2435; }
+.partner-chips { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; min-height:26px; }
+.pchip { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:500; border:0.5px solid var(--accent-border); background:var(--accent-dim); color:var(--accent); }
+.pchip .pchip-rate { opacity:.75; font-size:11px; }
+.pchip-none { color:var(--muted); font-size:12px; font-style:italic; }
 
-h1 {
-  font-size: 26px;
-  font-weight: 300;
-  letter-spacing: -.02em;
-  color: var(--text);
-  margin-top: 6px;
-}
+/* ── Controls ── */
+.controls-bar { display:flex; gap:24px; align-items:center; flex-wrap:wrap; margin-bottom:32px; }
+.ctrl-group { display:flex; flex-direction:column; gap:6px; }
+.ctrl-label { font-size:10px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+.seg { display:flex; background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.seg button { padding:7px 18px; border:none; background:transparent; color:var(--muted); font-family:var(--font); font-size:13px; font-weight:500; cursor:pointer; transition:all .15s; }
+.seg button.active { background:var(--accent); color:#fff; }
+.toggle-wrap { display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted); }
+.toggle { width:38px; height:22px; border-radius:11px; background:var(--surface2); border:0.5px solid var(--border2); cursor:pointer; position:relative; transition:background .2s; flex-shrink:0; }
+.toggle.on { background:var(--accent); border-color:var(--accent); }
+.toggle::after { content:''; position:absolute; top:3px; left:3px; width:14px; height:14px; border-radius:50%; background:#fff; transition:left .2s; }
+.toggle.on::after { left:21px; }
+.spif-wrap { display:flex; align-items:center; gap:8px; }
+.spif-wrap input { width:72px; background:var(--surface); border:0.5px solid var(--border2); border-radius:var(--radius); color:var(--text); font-family:var(--mono); font-size:14px; padding:7px 10px; text-align:center; outline:none; transition:border-color .15s; }
+.spif-wrap input:focus { border-color:var(--accent); }
+.unit { font-size:13px; color:var(--muted); }
 
-h1 span { color: var(--accent); }
+/* ── Section ── */
+.section { margin-bottom:32px; }
+.section-header { font-size:10px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; padding-bottom:8px; border-bottom:0.5px solid var(--border); }
+.section-lbl { font-size:13px; font-weight:500; color:var(--muted); margin-bottom:8px; margin-top:1.25rem; }
 
-.subtitle {
-  font-size: 13px;
-  color: var(--muted);
-  margin-top: 4px;
-}
+/* ── Header ── */
+header { margin-bottom:36px; border-bottom:0.5px solid var(--border); padding-bottom:24px; }
+.logo { font-size:11px; font-weight:500; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+h1 { font-size:26px; font-weight:300; letter-spacing:-.02em; margin-top:6px; }
+h1 span { color:var(--accent); }
+.subtitle { font-size:13px; color:var(--muted); margin-top:4px; }
 
-.controls-bar {
-  display: flex;
-  gap: 24px;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 32px;
-}
+/* ── Seat cards ── */
+.seat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:1.5rem; }
+.seat-card { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:18px; transition:border-color .2s; }
+.seat-card.custom-on { border-color:var(--accent-border); border-width:1.5px; }
+.seat-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
+.seat-name { font-size:13px; font-weight:500; }
+.seat-code { font-size:11px; color:var(--muted); font-family:var(--mono); margin-top:2px; }
+.custom-pill { font-size:10px; font-weight:500; padding:2px 7px; border-radius:20px; background:var(--accent-dim); color:var(--accent); border:0.5px solid var(--accent-border); display:none; }
+.book-rate { font-size:11px; color:var(--muted); margin-bottom:2px; }
+.rate-display { font-size:22px; font-weight:300; font-family:var(--mono); letter-spacing:-.02em; margin-bottom:14px; }
+.seat-fields { display:flex; flex-direction:column; gap:8px; }
+.field-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.field-row label { font-size:11px; color:var(--muted); white-space:nowrap; flex-shrink:0; }
+.field-row input { background:var(--surface2); border:0.5px solid var(--border); border-radius:7px; color:var(--text); font-family:var(--mono); font-size:13px; padding:5px 8px; text-align:right; outline:none; width:90px; transition:border-color .15s; }
+.field-row input:focus { border-color:var(--accent-border); }
+.field-row input::placeholder { color:var(--muted); opacity:.6; }
 
-.ctrl-group { display: flex; flex-direction: column; gap: 6px; }
+/* ── Summary cards ── */
+.summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:1.25rem; }
+.metric { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius); padding:14px 16px; }
+.metric .m-lbl { font-size:11px; color:var(--muted); margin-bottom:4px; }
+.metric .m-val { font-size:20px; font-weight:300; font-family:var(--mono); letter-spacing:-.02em; }
+.metric .m-badge { margin-top:5px; display:inline-block; }
+.key-metric { border-color:var(--accent-border) !important; }
+.key-metric .m-val { color:var(--accent); }
 
-.ctrl-label {
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
+/* ── Tables ── */
+.tbl-wrap { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-lg); overflow:auto; margin-bottom:1rem; }
+table { width:100%; border-collapse:collapse; font-size:12.5px; }
+thead th { padding:10px 14px; font-size:10px; font-weight:500; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); border-bottom:0.5px solid var(--border); text-align:right; white-space:nowrap; }
+thead th:first-child { text-align:left; }
+tbody td { padding:10px 14px; border-bottom:0.5px solid var(--border); text-align:right; color:var(--text); font-family:var(--mono); font-size:12px; }
+tbody td:first-child { text-align:left; font-family:var(--font); font-size:13px; }
+tbody tr:last-child td { border-bottom:none; }
+tbody tr.total-row td { background:var(--surface2); font-weight:500; border-top:0.5px solid var(--border2); }
+.seat-label-code { font-size:10px; color:var(--muted); font-family:var(--mono); display:block; margin-top:1px; }
+.custom-tag { display:inline-block; font-size:10px; padding:1px 5px; border-radius:4px; background:var(--accent-dim); color:var(--accent); margin-left:4px; font-family:var(--font); }
+.empty-state { text-align:center; color:var(--muted); padding:24px; font-size:13px; }
+.spif-selected td { background:var(--surface2) !important; }
 
-.seg {
-  display: flex;
-  background: var(--surface);
-  border: 0.5px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
+/* ── Badges ── */
+.badge { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:500; }
+.v-bad   { background:var(--red-dim);   color:var(--red);   border:0.5px solid var(--red-border); }
+.v-agg   { background:var(--blue-dim);  color:var(--blue);  border:0.5px solid var(--blue-border); }
+.v-good  { background:var(--green-dim); color:var(--green); border:0.5px solid var(--green-border); }
+.m-badge { font-family:var(--font); }
 
-.seg button {
-  padding: 7px 18px;
-  border: none;
-  background: transparent;
-  color: var(--muted);
-  font-family: var(--font);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all .15s;
-}
+/* ── Health panel (sales) ── */
+.health-panel { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:28px; }
+.health-top { display:flex; align-items:center; gap:20px; margin-bottom:28px; flex-wrap:wrap; }
+.health-icon { width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:26px; flex-shrink:0; }
+.hc-good  { background:var(--green-dim); border:1px solid var(--green-border); }
+.hc-agg   { background:var(--blue-dim);  border:1px solid var(--blue-border); }
+.hc-bad   { background:var(--red-dim);   border:1px solid var(--red-border); }
+.health-text .h-label { font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
+.health-text .h-verdict { font-size:28px; font-weight:300; letter-spacing:-.02em; }
+.health-text .h-sub { font-size:13px; color:var(--muted); margin-top:2px; }
+.txt-good { color:var(--green); }
+.txt-agg  { color:var(--blue); }
+.txt-bad  { color:var(--red); }
+.deal-strip { display:flex; gap:20px; flex-wrap:wrap; padding:16px 0; border-top:0.5px solid var(--border); border-bottom:0.5px solid var(--border); margin-bottom:24px; }
+.strip-item { display:flex; flex-direction:column; }
+.strip-lbl { font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:2px; }
+.strip-val { font-size:16px; font-weight:300; font-family:var(--mono); }
+.seat-verdicts { display:flex; flex-direction:column; gap:8px; margin-bottom:24px; }
+.sv-row { display:flex; align-items:center; justify-content:space-between; background:var(--surface2); border-radius:var(--radius); padding:10px 14px; }
+.sv-left { display:flex; flex-direction:column; }
+.sv-name { font-size:13px; font-weight:500; }
+.sv-detail { font-size:11px; color:var(--muted); margin-top:1px; }
+.spif-rows { display:flex; flex-direction:column; gap:6px; }
+.spif-row { display:flex; align-items:center; gap:12px; padding:8px 14px; border-radius:var(--radius); background:var(--surface2); }
+.spif-row.selected { outline:1px solid var(--accent-border); }
+.spif-mult-label { font-family:var(--mono); font-size:13px; font-weight:500; width:30px; flex-shrink:0; }
+.spif-bar-wrap { flex:1; height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+.spif-bar { height:100%; border-radius:3px; transition:width .3s ease; }
+.spif-badge { margin-left:auto; flex-shrink:0; }
+.empty-panel { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:40px; text-align:center; color:var(--muted); font-size:13px; }
+.spif-section-title { font-size:10px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
 
-.seg button.active {
-  background: var(--accent);
-  color: #fff;
-}
-
-.toggle-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.toggle {
-  width: 38px;
-  height: 22px;
-  border-radius: 11px;
-  background: var(--surface2);
-  border: 0.5px solid var(--border2);
-  cursor: pointer;
-  position: relative;
-  transition: background .2s;
-  flex-shrink: 0;
-}
-
-.toggle.on { background: var(--accent); border-color: var(--accent); }
-
-.toggle::after {
-  content: '';
-  position: absolute;
-  top: 3px; left: 3px;
-  width: 14px; height: 14px;
-  border-radius: 50%;
-  background: #fff;
-  transition: left .2s;
-}
-
-.toggle.on::after { left: 21px; }
-
-.spif-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.spif-wrap input {
-  width: 72px;
-  background: var(--surface);
-  border: 0.5px solid var(--border2);
-  border-radius: var(--radius);
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 14px;
-  padding: 7px 10px;
-  text-align: center;
-  outline: none;
-  transition: border-color .15s;
-}
-
-.spif-wrap input:focus { border-color: var(--accent); }
-
-.spif-wrap .unit {
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.seat-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 12px;
-  margin-bottom: 36px;
-}
-
-.seat-card {
-  background: var(--surface);
-  border: 0.5px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 18px;
-  transition: border-color .2s;
-}
-
-.seat-card.custom-on { border-color: var(--accent-border); }
-
-.seat-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 14px;
-}
-
-.seat-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text);
-}
-
-.seat-code {
-  font-size: 11px;
-  color: var(--muted);
-  font-family: var(--mono);
-  margin-top: 2px;
-}
-
-.custom-pill {
-  font-size: 10px;
-  font-weight: 500;
-  padding: 2px 7px;
-  border-radius: 20px;
-  background: var(--accent-dim);
-  color: var(--accent);
-  border: 0.5px solid var(--accent-border);
-  display: none;
-}
-
-.book-rate {
-  font-size: 11px;
-  color: var(--muted);
-  margin-bottom: 2px;
-}
-
-.rate-display {
-  font-size: 22px;
-  font-weight: 300;
-  font-family: var(--mono);
-  color: var(--text);
-  letter-spacing: -.02em;
-  margin-bottom: 14px;
-}
-
-.rate-display .cents { font-size: 14px; }
-
-.seat-fields { display: flex; flex-direction: column; gap: 8px; }
-
-.field-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.field-row label {
-  font-size: 11px;
-  color: var(--muted);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.field-row input {
-  background: var(--surface2);
-  border: 0.5px solid var(--border);
-  border-radius: 7px;
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 13px;
-  padding: 5px 8px;
-  text-align: right;
-  outline: none;
-  width: 90px;
-  transition: border-color .15s;
-}
-
-.field-row input:focus { border-color: var(--accent-border); }
-
-.field-row input::placeholder { color: var(--muted); opacity: .6; }
-
-.section {
-  margin-bottom: 32px;
-}
-
-.section-header {
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 14px;
-  padding-bottom: 8px;
-  border-bottom: 0.5px solid var(--border);
-}
-
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 10px;
-}
-
-.metric {
-  background: var(--surface);
-  border: 0.5px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px 16px;
-}
-
-.metric .m-lbl {
-  font-size: 11px;
-  color: var(--muted);
-  margin-bottom: 4px;
-}
-
-.metric .m-val {
-  font-size: 20px;
-  font-weight: 300;
-  font-family: var(--mono);
-  letter-spacing: -.02em;
-  color: var(--text);
-}
-
-.metric .m-badge {
-  margin-top: 5px;
-  display: inline-block;
-}
-
-.tbl-wrap {
-  background: var(--surface);
-  border: 0.5px solid var(--border);
-  border-radius: var(--radius-lg);
-  overflow: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12.5px;
-}
-
-thead th {
-  padding: 10px 14px;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--muted);
-  border-bottom: 0.5px solid var(--border);
-  text-align: right;
-  white-space: nowrap;
-}
-
-thead th:first-child { text-align: left; }
-
-tbody td {
-  padding: 10px 14px;
-  border-bottom: 0.5px solid var(--border);
-  text-align: right;
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 12px;
-}
-
-tbody td:first-child {
-  text-align: left;
-  font-family: var(--font);
-  font-size: 13px;
-}
-
-tbody tr:last-child td { border-bottom: none; }
-
-tbody tr.total-row td {
-  background: var(--surface2);
-  font-weight: 500;
-  border-top: 0.5px solid var(--border2);
-}
-
-.seat-label-code {
-  font-size: 10px;
-  color: var(--muted);
-  font-family: var(--mono);
-  display: block;
-  margin-top: 1px;
-}
-
-.badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 10px;
-  font-weight: 500;
-  font-family: var(--font);
-  letter-spacing: .02em;
-}
-
-.v-bad   { background: var(--red-dim);   color: var(--red);   border: 0.5px solid rgba(239,68,68,.2); }
-.v-strat { background: var(--amber-dim); color: var(--amber); border: 0.5px solid rgba(245,158,11,.2); }
-.v-agg   { background: var(--blue-dim);  color: var(--blue);  border: 0.5px solid rgba(59,130,246,.2); }
-.v-good  { background: var(--green-dim); color: var(--green); border: 0.5px solid rgba(34,197,94,.2); }
-
-.custom-tag {
-  display: inline-block;
-  font-size: 10px;
-  padding: 1px 5px;
-  border-radius: 4px;
-  background: var(--accent-dim);
-  color: var(--accent);
-  margin-left: 4px;
-  font-family: var(--font);
-}
-
-.empty-state {
-  text-align: center;
-  color: var(--muted);
-  padding: 24px;
-  font-size: 13px;
-}
-
-.spif-selected td { background: var(--surface2) !important; }
-
-.key-metric { border-color: var(--accent-border) !important; }
-.key-metric .m-val { color: var(--accent); }
-
-footer {
-  margin-top: 60px;
-  padding-top: 20px;
-  border-top: 0.5px solid var(--border);
-  font-size: 11px;
-  color: var(--muted);
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.partner-bar {
-  background: var(--surface);
-  border: 0.5px solid var(--accent-border);
-  border-radius: var(--radius-lg);
-  padding: 18px 20px;
-  margin-bottom: 28px;
-  display: flex;
-  gap: 20px;
-  align-items: flex-end;
-  flex-wrap: wrap;
-}
-.partner-bar .ctrl-group { flex: 1; min-width: 200px; }
-.partner-select {
-  width: 100%;
-  background: var(--surface2);
-  border: 0.5px solid var(--border2);
-  border-radius: var(--radius);
-  color: var(--text);
-  font-family: var(--font);
-  font-size: 13px;
-  padding: 8px 12px;
-  outline: none;
-  cursor: pointer;
-  transition: border-color .15s;
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  padding-right: 30px;
-}
-.partner-select:focus { border-color: var(--accent); }
-.partner-select option { background: #1f2435; }
-.partner-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; min-height: 26px; }
-.pchip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  border: 0.5px solid var(--accent-border);
-  background: var(--accent-dim);
-  color: var(--accent);
-}
-.pchip .pchip-rate { opacity: .75; font-size: 11px; }
-.pchip-none { color: var(--muted); font-size: 12px; font-style: italic; }
+footer { margin-top:60px; padding-top:20px; border-top:0.5px solid var(--border); font-size:11px; color:var(--muted); display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
 
 </style>
 </head>
 <body>
-<div class="page">
 
-  <header>
-    <div>
-      <div class="logo">NHC &mdash; UCaaS</div>
-      <h1>Deal <span>Calculator</span></h1>
-      <div class="subtitle">Hosted voice &mdash; comp, SPIF &amp; profitability</div>
+<nav class="app-nav">
+  <div class="nav-brand">NHC &nbsp;<span>UCaaS</span></div>
+  <div class="nav-right">
+    <div class="nav-mode">
+      <button id="nav-sales" class="active" onclick="switchView('sales')">Sales view</button>
+      <button id="nav-admin" onclick="switchView('admin')">Admin view</button>
     </div>
-  </header>
+    <button class="nav-lock-btn" id="nav-lock" onclick="lockAdmin()">🔒 Lock</button>
+  </div>
+</nav>
 
-  <div class="partner-bar">
+<div id="view-lock" class="">
+  <div class="lock-card">
+    <div class="lock-icon">🔐</div>
+    <div class="lock-title">Admin access</div>
+    <div class="lock-sub">Enter the password to view full margin &amp; profit data</div>
+    <input class="lock-input" type="password" id="lock-pw" placeholder="••••••••"
+      onkeydown="if(event.key==='Enter')checkPw()">
+    <button class="lock-btn" onclick="checkPw()">Unlock</button>
+    <div class="lock-err" id="lock-err"></div>
+  </div>
+</div>
+
+<div id="view-sales" style="display:none">
+  <div class="page page-narrow">
+    <header>
+      <div class="logo">NHC — UCaaS</div>
+      <h1>Deal <span>Builder</span></h1>
+      <div class="subtitle">Configure your deal and see if it works</div>
+    </header>
+
+    <div class="partner-bar">
     <div class="ctrl-group" style="flex:2;min-width:260px">
       <div class="ctrl-label">Sold through partner</div>
-      <select class="partner-select" id="partner-select" onchange="onPartnerChange()">
+      <select class="partner-select" id="s-partner-select" onchange="onSPartnerChange()">
         <option value="">— Select partner —</option>
       </select>
     </div>
     <div class="ctrl-group" style="flex:1;min-width:160px">
       <div class="ctrl-label">Product type</div>
-      <select class="partner-select" id="term-select" onchange="onTermChange()">
+      <select class="partner-select" id="s-term-select" onchange="onSTermChange()">
         <option value="">— Select partner first —</option>
       </select>
     </div>
     <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
       <div class="ctrl-label">Partner comp rate</div>
-      <div class="partner-chips" id="partner-chips"><span class="pchip-none">No partner selected</span></div>
+      <div class="partner-chips" id="s-partner-chips"><span class="pchip-none">No partner selected</span></div>
     </div>
   </div>
-
-  <div class="controls-bar">
+    <div class="controls-bar">
     <div class="ctrl-group">
       <div class="ctrl-label">Term</div>
-      <div class="seg">
-        <button data-t="12" onclick="setTerm(12)">12 months</button>
-        <button data-t="36" class="active" onclick="setTerm(36)">36 months</button>
+      <div class="seg" id="s-seg">
+        <button data-t="12" onclick="sSetTerm(12)">12 months</button>
+        <button data-t="36" class="active" onclick="sSetTerm(36)">36 months</button>
       </div>
     </div>
-
     <div class="ctrl-group">
       <div class="ctrl-label">Pricing</div>
       <div class="toggle-wrap">
-        <button class="toggle" id="icb-toggle" onclick="toggleICB()" aria-label="Toggle ICB pricing"></button>
-        <span id="icb-label">Standard MRC</span>
+        <button class="toggle" id="s-icb-toggle" onclick="sToggleICB()" aria-label="Toggle ICB pricing"></button>
+        <span id="s-icb-label">Standard MRC</span>
       </div>
     </div>
-
     <div class="ctrl-group">
       <div class="ctrl-label">SPIF multiple</div>
       <div class="spif-wrap">
-        <input type="number" id="spif-mult" value="5" min="1" max="20" step="0.5" oninput="render()">
+        <input type="number" id="s-spif-mult" value="5" min="1" max="20" step="0.5" oninput="sRender()">
         <span class="unit">x MRC</span>
       </div>
     </div>
   </div>
 
   <div class="section">
-    <div class="section-header">Seat configuration</div>
+    <div class="section-header">Configure seats</div>
     <div class="seat-grid">
-
-      <div class="seat-card" id="card-std">
+      <div class="seat-card" id="s-card-std">
         <div class="seat-top">
-          <div>
-            <div class="seat-name">Standard</div>
-            <div class="seat-code">BCCSTN</div>
-          </div>
-          <span class="custom-pill" id="badge-std">custom</span>
+          <div><div class="seat-name">Standard</div><div class="seat-code">BCCSTN</div></div>
+          <span class="custom-pill" id="s-badge-std">custom</span>
         </div>
         <div class="book-rate">Book rate</div>
-        <div class="rate-display" id="book-std">$12.95</div>
+        <div class="rate-display" id="s-book-std">—</div>
         <div class="seat-fields">
           <div class="field-row">
             <label>Quantity</label>
-            <input type="number" id="qty-std" min="0" value="0" oninput="render()">
+            <input type="number" id="s-qty-std" min="0" value="0" oninput="sRender()">
           </div>
           <div class="field-row">
-            <label>Custom $</label>
-            <input type="number" id="custom-std" min="0" step="0.01" placeholder="book rate" oninput="onCustom('std')">
+            <label>Custom&nbsp;$</label>
+            <input type="number" id="s-custom-std" min="0" step="0.01" placeholder="book rate" oninput="onSCustom('std')">
           </div>
         </div>
       </div>
-
-      <div class="seat-card" id="card-adv">
+      <div class="seat-card" id="s-card-adv">
         <div class="seat-top">
-          <div>
-            <div class="seat-name">Advanced</div>
-            <div class="seat-code">BCCADV</div>
-          </div>
-          <span class="custom-pill" id="badge-adv">custom</span>
+          <div><div class="seat-name">Advanced</div><div class="seat-code">BCCADV</div></div>
+          <span class="custom-pill" id="s-badge-adv">custom</span>
         </div>
         <div class="book-rate">Book rate</div>
-        <div class="rate-display" id="book-adv">$16.95</div>
+        <div class="rate-display" id="s-book-adv">—</div>
         <div class="seat-fields">
           <div class="field-row">
             <label>Quantity</label>
-            <input type="number" id="qty-adv" min="0" value="0" oninput="render()">
+            <input type="number" id="s-qty-adv" min="0" value="0" oninput="sRender()">
           </div>
           <div class="field-row">
-            <label>Custom $</label>
-            <input type="number" id="custom-adv" min="0" step="0.01" placeholder="book rate" oninput="onCustom('adv')">
+            <label>Custom&nbsp;$</label>
+            <input type="number" id="s-custom-adv" min="0" step="0.01" placeholder="book rate" oninput="onSCustom('adv')">
           </div>
         </div>
       </div>
-
-      <div class="seat-card" id="card-pro">
+      <div class="seat-card" id="s-card-pro">
         <div class="seat-top">
-          <div>
-            <div class="seat-name">Professional</div>
-            <div class="seat-code">BCCPRO</div>
-          </div>
-          <span class="custom-pill" id="badge-pro">custom</span>
+          <div><div class="seat-name">Professional</div><div class="seat-code">BCCPRO</div></div>
+          <span class="custom-pill" id="s-badge-pro">custom</span>
         </div>
         <div class="book-rate">Book rate</div>
-        <div class="rate-display" id="book-pro">$19.95</div>
+        <div class="rate-display" id="s-book-pro">—</div>
         <div class="seat-fields">
           <div class="field-row">
             <label>Quantity</label>
-            <input type="number" id="qty-pro" min="0" value="0" oninput="render()">
+            <input type="number" id="s-qty-pro" min="0" value="0" oninput="sRender()">
           </div>
           <div class="field-row">
-            <label>Custom $</label>
-            <input type="number" id="custom-pro" min="0" step="0.01" placeholder="book rate" oninput="onCustom('pro')">
+            <label>Custom&nbsp;$</label>
+            <input type="number" id="s-custom-pro" min="0" step="0.01" placeholder="book rate" oninput="onSCustom('pro')">
           </div>
         </div>
       </div>
-
-      <div class="seat-card" id="card-cfm">
+      <div class="seat-card" id="s-card-cfm">
         <div class="seat-top">
-          <div>
-            <div class="seat-name">Call flow manager</div>
-            <div class="seat-code">BCCCFM</div>
-          </div>
-          <span class="custom-pill" id="badge-cfm">custom</span>
+          <div><div class="seat-name">Call flow mgr</div><div class="seat-code">BCCCFM</div></div>
+          <span class="custom-pill" id="s-badge-cfm">custom</span>
         </div>
         <div class="book-rate">Book rate</div>
-        <div class="rate-display" id="book-cfm">$9.95</div>
+        <div class="rate-display" id="s-book-cfm">—</div>
         <div class="seat-fields">
           <div class="field-row">
             <label>Quantity</label>
-            <input type="number" id="qty-cfm" min="0" value="0" oninput="render()">
+            <input type="number" id="s-qty-cfm" min="0" value="0" oninput="sRender()">
           </div>
           <div class="field-row">
-            <label>Custom $</label>
-            <input type="number" id="custom-cfm" min="0" step="0.01" placeholder="book rate" oninput="onCustom('cfm')">
+            <label>Custom&nbsp;$</label>
+            <input type="number" id="s-custom-cfm" min="0" step="0.01" placeholder="book rate" oninput="onSCustom('cfm')">
           </div>
         </div>
       </div>
+    </div>
+  </div>
 
+  <div class="section">
+    <div class="section-header">Deal health</div>
+    <div class="empty-panel" id="s-empty-panel">
+      <div style="font-size:28px;margin-bottom:10px">🧮</div>
+      Enter seat quantities above to check your deal
+    </div>
+    <div class="health-panel" id="s-health-panel" style="display:none">
+      <div class="health-top">
+        <div class="health-icon" id="s-h-icon">✅</div>
+        <div class="health-text">
+          <div class="h-label">Overall deal</div>
+          <div class="h-verdict" id="s-h-verdict">—</div>
+          <div class="h-sub" id="s-h-sub"></div>
+        </div>
+      </div>
+      <div class="deal-strip" id="s-deal-strip"></div>
+      <div style="margin-bottom:10px">
+        <div class="spif-section-title">Per seat type</div>
+        <div class="seat-verdicts" id="s-seat-verdicts"></div>
+      </div>
+      <div>
+        <div class="spif-section-title">SPIF range — 3x through 10x</div>
+        <div class="spif-rows" id="s-spif-rows"></div>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <span>NHC UCaaS &nbsp;&bull;&nbsp; Hosted voice deal builder</span>
+    <span>28%+ healthy &nbsp;&bull;&nbsp; 25–28% aggressive &nbsp;&bull;&nbsp; &lt;25% needs review</span>
+  </footer>
+
+  </div>
+</div>
+
+<div id="view-admin" style="display:none">
+  <div class="page page-wide">
+    <header>
+      <div class="logo">NHC — UCaaS &nbsp;/ Admin</div>
+      <h1>Deal <span>Calculator</span></h1>
+      <div class="subtitle">Full margin, commission &amp; SPIF profitability</div>
+    </header>
+
+    <div class="partner-bar">
+    <div class="ctrl-group" style="flex:2;min-width:260px">
+      <div class="ctrl-label">Sold through partner</div>
+      <select class="partner-select" id="a-partner-select" onchange="onAPartnerChange()">
+        <option value="">— Select partner —</option>
+      </select>
+    </div>
+    <div class="ctrl-group" style="flex:1;min-width:160px">
+      <div class="ctrl-label">Product type</div>
+      <select class="partner-select" id="a-term-select" onchange="onATermChange()">
+        <option value="">— Select partner first —</option>
+      </select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+      <div class="ctrl-label">Partner comp rate</div>
+      <div class="partner-chips" id="a-partner-chips"><span class="pchip-none">No partner selected</span></div>
+    </div>
+  </div>
+    <div class="controls-bar">
+    <div class="ctrl-group">
+      <div class="ctrl-label">Term</div>
+      <div class="seg" id="a-seg">
+        <button data-t="12" onclick="aSetTerm(12)">12 months</button>
+        <button data-t="36" class="active" onclick="aSetTerm(36)">36 months</button>
+      </div>
+    </div>
+    <div class="ctrl-group">
+      <div class="ctrl-label">Pricing</div>
+      <div class="toggle-wrap">
+        <button class="toggle" id="a-icb-toggle" onclick="aToggleICB()" aria-label="Toggle ICB pricing"></button>
+        <span id="a-icb-label">Standard MRC</span>
+      </div>
+    </div>
+    <div class="ctrl-group">
+      <div class="ctrl-label">SPIF multiple</div>
+      <div class="spif-wrap">
+        <input type="number" id="a-spif-mult" value="5" min="1" max="20" step="0.5" oninput="aRender()">
+        <span class="unit">x MRC</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">Configure seats</div>
+    <div class="seat-grid">
+      <div class="seat-card" id="a-card-std">
+        <div class="seat-top">
+          <div><div class="seat-name">Standard</div><div class="seat-code">BCCSTN</div></div>
+          <span class="custom-pill" id="a-badge-std">custom</span>
+        </div>
+        <div class="book-rate">Book rate</div>
+        <div class="rate-display" id="a-book-std">—</div>
+        <div class="seat-fields">
+          <div class="field-row">
+            <label>Quantity</label>
+            <input type="number" id="a-qty-std" min="0" value="0" oninput="aRender()">
+          </div>
+          <div class="field-row">
+            <label>Custom&nbsp;$</label>
+            <input type="number" id="a-custom-std" min="0" step="0.01" placeholder="book rate" oninput="onACustom('std')">
+          </div>
+        </div>
+      </div>
+      <div class="seat-card" id="a-card-adv">
+        <div class="seat-top">
+          <div><div class="seat-name">Advanced</div><div class="seat-code">BCCADV</div></div>
+          <span class="custom-pill" id="a-badge-adv">custom</span>
+        </div>
+        <div class="book-rate">Book rate</div>
+        <div class="rate-display" id="a-book-adv">—</div>
+        <div class="seat-fields">
+          <div class="field-row">
+            <label>Quantity</label>
+            <input type="number" id="a-qty-adv" min="0" value="0" oninput="aRender()">
+          </div>
+          <div class="field-row">
+            <label>Custom&nbsp;$</label>
+            <input type="number" id="a-custom-adv" min="0" step="0.01" placeholder="book rate" oninput="onACustom('adv')">
+          </div>
+        </div>
+      </div>
+      <div class="seat-card" id="a-card-pro">
+        <div class="seat-top">
+          <div><div class="seat-name">Professional</div><div class="seat-code">BCCPRO</div></div>
+          <span class="custom-pill" id="a-badge-pro">custom</span>
+        </div>
+        <div class="book-rate">Book rate</div>
+        <div class="rate-display" id="a-book-pro">—</div>
+        <div class="seat-fields">
+          <div class="field-row">
+            <label>Quantity</label>
+            <input type="number" id="a-qty-pro" min="0" value="0" oninput="aRender()">
+          </div>
+          <div class="field-row">
+            <label>Custom&nbsp;$</label>
+            <input type="number" id="a-custom-pro" min="0" step="0.01" placeholder="book rate" oninput="onACustom('pro')">
+          </div>
+        </div>
+      </div>
+      <div class="seat-card" id="a-card-cfm">
+        <div class="seat-top">
+          <div><div class="seat-name">Call flow mgr</div><div class="seat-code">BCCCFM</div></div>
+          <span class="custom-pill" id="a-badge-cfm">custom</span>
+        </div>
+        <div class="book-rate">Book rate</div>
+        <div class="rate-display" id="a-book-cfm">—</div>
+        <div class="seat-fields">
+          <div class="field-row">
+            <label>Quantity</label>
+            <input type="number" id="a-qty-cfm" min="0" value="0" oninput="aRender()">
+          </div>
+          <div class="field-row">
+            <label>Custom&nbsp;$</label>
+            <input type="number" id="a-custom-cfm" min="0" step="0.01" placeholder="book rate" oninput="onACustom('cfm')">
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
   <div class="section">
     <div class="section-header">Deal summary</div>
-    <div class="summary-grid" id="summary-grid">
+    <div class="summary-grid" id="a-summary-grid">
       <div class="empty-state" style="grid-column:1/-1">Enter seat quantities to see results</div>
     </div>
   </div>
@@ -656,245 +506,364 @@ footer {
     <div class="tbl-wrap">
       <table>
         <thead><tr>
-          <th>Seat</th>
-          <th>Qty</th>
-          <th>MRC</th>
-          <th>Commission</th>
-          <th>Monthly profit</th>
-          <th>Deal profit</th>
-          <th>SPIF payout</th>
-          <th>Remaining</th>
-          <th>Margin</th>
-          <th>Verdict</th>
+          <th>Seat</th><th>Qty</th><th>MRC</th><th>Commission</th>
+          <th>Monthly profit</th><th>Deal profit</th><th>SPIF payout</th>
+          <th>Remaining</th><th>Margin</th><th>Verdict</th>
         </tr></thead>
-        <tbody id="breakdown-tbody">
-          <tr><td colspan="10" class="empty-state">Set seat quantities above</td></tr>
-        </tbody>
+        <tbody id="a-breakdown-tbody"><tr><td colspan="10" class="empty-state">Set seat quantities above</td></tr></tbody>
       </table>
     </div>
   </div>
 
   <div class="section">
-    <div class="section-header">SPIF sensitivity &mdash; 3x through 10x &mdash; total deal</div>
+    <div class="section-header">SPIF sensitivity — 3x through 10x — total deal</div>
     <div class="tbl-wrap">
       <table>
         <thead><tr>
-          <th>Multiple</th>
-          <th>SPIF payout</th>
-          <th>Deal profit after comm.</th>
-          <th>Remaining after SPIF</th>
-          <th>Margin after SPIF</th>
-          <th>Verdict</th>
+          <th>Multiple</th><th>SPIF payout</th><th>Deal profit after comm.</th>
+          <th>Remaining after SPIF</th><th>Margin after SPIF</th><th>Verdict</th>
         </tr></thead>
-        <tbody id="spif-tbody">
-          <tr><td colspan="6" class="empty-state">Set seat quantities above</td></tr>
-        </tbody>
+        <tbody id="a-spif-tbody"><tr><td colspan="6" class="empty-state">Set seat quantities above</td></tr></tbody>
       </table>
     </div>
   </div>
 
   <footer>
-    <span>Commission rate: 22% &nbsp;&bull;&nbsp; CFM cost: $0</span>
-    <span>Verdicts: &lt;25% needs review &nbsp;&bull;&nbsp; 25–28% aggressive &nbsp;&bull;&nbsp; 28%+ healthy</span>
+    <span>Commission rate: partner-specific &nbsp;&bull;&nbsp; CFM cost: $0</span>
+    <span>28%+ healthy &nbsp;&bull;&nbsp; 25–28% aggressive &nbsp;&bull;&nbsp; &lt;25% needs review</span>
   </footer>
 
+  </div>
 </div>
 
 <script>
+
+// ══ SHARED DATA ══════════════════════════════════════════════════════════
 const SEATS = [
-  {key:'std', name:'Standard',         code:'BCCSTN', std12:15.95, std36:12.95, icb12:10.95, icb36:7.95,  cost:3.00},
-  {key:'adv', name:'Advanced',         code:'BCCADV', std12:25.95, std36:16.95, icb12:16.95, icb36:12.95, cost:5.00},
-  {key:'pro', name:'Professional',     code:'BCCPRO', std12:32.95, std36:19.95, icb12:20.95, icb36:16.95, cost:8.00},
-  {key:'cfm', name:'Call flow mgr',    code:'BCCCFM', std12:12.95, std36:9.95,  icb12:4.95,  icb36:4.95,  cost:0.00},
+  {key:'std', name:'Standard',      code:'BCCSTN', std12:15.95, std36:12.95, icb12:10.95, icb36:7.95,  cost:3.00},
+  {key:'adv', name:'Advanced',      code:'BCCADV', std12:25.95, std36:16.95, icb12:16.95, icb36:12.95, cost:5.00},
+  {key:'pro', name:'Professional',  code:'BCCPRO', std12:32.95, std36:19.95, icb12:20.95, icb36:16.95, cost:8.00},
+  {key:'cfm', name:'Call flow mgr', code:'BCCCFM', std12:12.95, std36:9.95,  icb12:4.95,  icb36:4.95,  cost:0.00},
 ];
-const CR = 0.22;
-let commissionRate = 0.22;
-let term = 36, icb = false;
 
-function bookMRC(s) { return icb ? (term===12 ? s.icb12 : s.icb36) : (term===12 ? s.std12 : s.std36); }
-function effectiveMRC(s) { const v = parseFloat(document.getElementById('custom-'+s.key).value); return (!isNaN(v) && v > 0) ? v : bookMRC(s); }
-function isCustom(s) { const v = parseFloat(document.getElementById('custom-'+s.key).value); return !isNaN(v) && v > 0 && Math.abs(v - bookMRC(s)) > 0.001; }
-function getQty(k) { return Math.max(0, parseInt(document.getElementById('qty-'+k).value) || 0); }
-
-function fmt(n) { return '$' + Math.abs(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}); }
-function pct(n) { return (n * 100).toFixed(1) + '%'; }
-
+function fmt(n) { return '$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function pct(n) { return (n*100).toFixed(1)+'%'; }
 function verdict(m) {
-  if (m < 0.25) return {label:'Needs review', cls:'v-bad'};
-  if (m < 0.28) return {label:'Aggressive',   cls:'v-agg'};
-  return {label:'Healthy', cls:'v-good'};
+  if (m < 0.25) return {label:'Needs review', cls:'v-bad',  hcls:'hc-bad',  tcls:'txt-bad',  icon:'🚫', sub:'This deal needs manager review before proceeding.'};
+  if (m < 0.28) return {label:'Aggressive',   cls:'v-agg',  hcls:'hc-agg',  tcls:'txt-agg',  icon:'💪', sub:'Tight but approvable. Good for competitive situations.'};
+  return              {label:'Healthy',       cls:'v-good', hcls:'hc-good', tcls:'txt-good', icon:'✅', sub:'This deal works. Go close it.'};
 }
 
-function updateBookRates() {
-  SEATS.forEach(s => { document.getElementById('book-'+s.key).textContent = fmt(bookMRC(s)); });
-}
-
-function onCustom(key) {
-  const s = SEATS.find(x => x.key === key);
-  const c = isCustom(s);
-  document.getElementById('badge-'+key).style.display = c ? 'inline-block' : 'none';
-  document.getElementById('card-'+key).classList.toggle('custom-on', c);
-  render();
-}
-
-function setTerm(t) {
-  term = t;
-  document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('active', +b.dataset.t === t));
-  updateBookRates();
-  render();
-}
-
-function toggleICB() {
-  icb = !icb;
-  document.getElementById('icb-toggle').classList.toggle('on', icb);
-  document.getElementById('icb-label').textContent = icb ? 'ICB MRC' : 'Standard MRC';
-  updateBookRates();
-  render();
-}
-
-function calcDeal(spifMult) {
-  let totMRC=0, totProfit=0, totSpif=0, totComm=0;
-  SEATS.forEach(s => {
-    const q = getQty(s.key); if (!q) return;
-    const m = effectiveMRC(s), comm = m * commissionRate, profit = (m - s.cost - comm) * q * term;
-    totMRC += m * q; totProfit += profit; totSpif += m * spifMult * q; totComm += comm * q;
-  });
-  const remaining = totProfit - totSpif;
-  const marginAfterSpif = totMRC * term > 0 ? remaining / (totMRC * term) : 0;
-  return {totMRC, totProfit, totSpif, totComm, remaining, marginAfterSpif};
-}
-
-function render() {
-  const spifMult = parseFloat(document.getElementById('spif-mult').value) || 5;
-  const d = calcDeal(spifMult);
-  const rev = d.totMRC * term;
-  const marginComm = rev > 0 ? d.totProfit / rev : 0;
-  const hasSeats = SEATS.some(s => getQty(s.key) > 0);
-
-  if (!hasSeats) {
-    document.getElementById('summary-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1">Enter seat quantities to see results</div>';
-    document.getElementById('breakdown-tbody').innerHTML = '<tr><td colspan="10" class="empty-state">Set seat quantities above</td></tr>';
-    document.getElementById('spif-tbody').innerHTML = '<tr><td colspan="6" class="empty-state">Set seat quantities above</td></tr>';
-    return;
-  }
-
-  const v = verdict(d.marginAfterSpif);
-  const summaryItems = [
-    {lbl:'Total MRC',             val:fmt(d.totMRC)},
-    {lbl:'Deal revenue ('+term+'m)', val:fmt(rev)},
-    {lbl:'Commission / month',    val:fmt(d.totComm)},
-    {lbl:'Deal profit after comm.', val:fmt(d.totProfit)},
-    {lbl:'SPIF payout ('+spifMult+'x)', val:fmt(d.totSpif)},
-    {lbl:'Remaining profit',      val:fmt(d.remaining)},
-    {lbl:'Margin after comm.',    val:pct(marginComm)},
-    {lbl:'Margin after SPIF',     val:pct(d.marginAfterSpif), verdict:v, key:true},
-  ];
-
-  document.getElementById('summary-grid').innerHTML = summaryItems.map(c =>
-    `<div class="metric${c.key?' key-metric':''}">
-      <div class="m-lbl">${c.lbl}</div>
-      <div class="m-val">${c.val}</div>
-      ${c.verdict ? `<span class="badge ${c.verdict.cls} m-badge">${c.verdict.label}</span>` : ''}
-    </div>`
-  ).join('');
-
-  const active = SEATS.filter(s => getQty(s.key) > 0);
-  let rows = '', totM=0, totC=0, totDP=0, totSP=0, totR=0;
-  active.forEach(s => {
-    const q=getQty(s.key), m=effectiveMRC(s), comm=m*commissionRate, mp=m-s.cost-comm;
-    const dp=mp*q*term, sp=m*spifMult*q, rem=dp-sp;
-    const margin = m*q*term > 0 ? rem/(m*q*term) : 0;
-    const vv = verdict(margin);
-    const ct = isCustom(s) ? '<span class="custom-tag">custom</span>' : '';
-    totM+=m*q; totC+=comm*q; totDP+=dp; totSP+=sp; totR+=rem;
-    rows += `<tr>
-      <td>${s.name}<span class="seat-label-code">${s.code}</span></td>
-      <td>${q}</td>
-      <td>${fmt(m)}${ct}</td>
-      <td>${fmt(comm)}</td>
-      <td>${fmt(mp)}/seat</td>
-      <td>${fmt(dp)}</td>
-      <td>${fmt(sp)}</td>
-      <td>${fmt(rem)}</td>
-      <td>${pct(margin)}</td>
-      <td><span class="badge ${vv.cls}">${vv.label}</span></td>
-    </tr>`;
-  });
-  const totMargin = totM*term > 0 ? totR/(totM*term) : 0;
-  const tv = verdict(totMargin);
-  rows += `<tr class="total-row">
-    <td>Total</td><td>—</td><td>${fmt(totM)}</td><td>${fmt(totC)}</td><td>—</td>
-    <td>${fmt(totDP)}</td><td>${fmt(totSP)}</td><td>${fmt(totR)}</td>
-    <td>${pct(totMargin)}</td><td><span class="badge ${tv.cls}">${tv.label}</span></td>
-  </tr>`;
-  document.getElementById('breakdown-tbody').innerHTML = rows;
-
-  document.getElementById('spif-tbody').innerHTML = [3,4,5,6,7,8,9,10].map(m => {
-    const dd = calcDeal(m);
-    const vv = verdict(dd.marginAfterSpif);
-    const sel = Math.abs(m - spifMult) < 0.01;
-    return `<tr class="${sel?'spif-selected':''}">
-      <td>${m}x${sel?' ◀':''}</td>
-      <td>${fmt(dd.totSpif)}</td>
-      <td>${fmt(dd.totProfit)}</td>
-      <td>${fmt(dd.remaining)}</td>
-      <td>${pct(dd.marginAfterSpif)}</td>
-      <td><span class="badge ${vv.cls}">${vv.label}</span></td>
-    </tr>`;
-  }).join('');
-}
-
-updateBookRates();
-render();
-
-// ── Partner data ──
+// Partner data
 const PARTNERS = {"BGD Communications (223)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "CORE Communications (225)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "P2/AppSmart (109)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Alpha Delta Inc (240)": [{"t": "One Year", "r": 10}, {"t": "Multi Year", "r": 18}], "Ted Lagala (227)": [{"t": "Multi Year", "r": 14}, {"t": "One Year", "r": 12}], "Hogan Communications (99)": [{"t": "Multi Year", "r": 8}, {"t": "One Year", "r": 8}], "Elaine White (21)": [{"t": "Multi Year", "r": 8}, {"t": "One Year", "r": 8}], "ARD (56)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "BT - Telecom (202)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Kevin Foley (64)": [{"t": "Multi Year", "r": 0}, {"t": "One Year", "r": 0}], "Steve Gibbs (69)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Veripoint (59)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Advantage Wireless (200)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Geroge Mont (11)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "SAM - Penske (84)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Global Tel (147)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "United Telecom (53)": [{"t": "Multi Year", "r": 8}, {"t": "One Year", "r": 8}], "Steve Luke (43)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "Stephen DePaula (199)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Deborah Noonan (156)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "Robert Darcy (83)": [{"t": "Multi Year", "r": 0}, {"t": "One Year", "r": 0}], "KZ Telecom (151)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Colson Communications (229)": [{"t": "Multi Year", "r": 5}, {"t": "One Year", "r": 5}], "Convergent Telecom/Bill Heinemann (8)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "Rondilo (86)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Bluewave (81)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "HVC TELECOM LLC (76)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Brad Fackler (111)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "JB (189)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "CDP/Sandler (101)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Rob Kilkowski (28)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Votacall (106)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "DO NOT USE (96)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Tele-Dynamics (75)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "Jim Allan (231)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "A&A Consulting (226)": [{"t": "Multi Year", "r": 12}, {"t": "One Year", "r": 10}], "Sharon Lorino (65)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "House Account (22)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "TDS Inc (95)": [{"t": "Multi Year", "r": 8}, {"t": "One Year", "r": 8}], "Kevin Nee (12)": [{"t": "Multi Year", "r": 15}, {"t": "One Year", "r": 15}], "Telequest (80)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Little Family Holdings, LLC (181)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Independent Business Communication (98)": [{"t": "Multi Year", "r": 8}, {"t": "One Year", "r": 8}], "World Telecom/Adam Walter (93)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "Sean Kelly/CBE (50)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "Harbor Networks (Boston Wireless) (201)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "EB (191)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Steve Cho (40)": [{"t": "Multi Year", "r": 12}, {"t": "One Year", "r": 10}], "Sherman Networks (113)": [{"t": "Multi Year", "r": 8}, {"t": "One Year", "r": 8}], "First Light Management (170)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Infinite Telecom (97)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "House (87)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "Integrated Solutions (92)": [{"t": "Multi Year", "r": 8}, {"t": "One Year", "r": 8}], "World Technologies Inc/Tom Duncan (4)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "NuSound (82)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "NEAT Communications (77)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "Telecom Consultants, LLP (117)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "APC Services (190)": [{"t": "Multi Year", "r": 17}, {"t": "One Year", "r": 17}], "Bernie Talkow (112)": [{"t": "Multi Year", "r": 8}, {"t": "One Year", "r": 8}], "J&L Mgmt/John Giblo (39)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "AmpliX (107)": [{"t": "Multi Year", "r": 25}, {"t": "One Year", "r": 25}], "3D Advantage (185)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Garrett Douglas (47)": [{"t": "Multi Year", "r": 8}, {"t": "One Year", "r": 8}], "CRA Telecom (188)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "Rod MacKenzie (27)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 10}], "FSJN Net (228)": [{"t": "Multi Year", "r": 12}, {"t": "One Year", "r": 10}], "Diversified Telecom Group (239)": [{"t": "Multi Year", "r": 10}], "CMC Technology Group (222)": [{"t": "Multi Year", "r": 0}, {"t": "One Year", "r": 0}], "ACE Technology Advisors, LLC (232)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Strategic Partners Communications, Inc (246)": [{"t": "One Year", "r": 0}, {"t": "Multi Year", "r": 0}], "G&G Solutions (270)": [{"t": "One Year", "r": 10}, {"t": "Multi Year", "r": 10}], "Crosstar Network Solutions (247)": [{"t": "Multi Year", "r": 23}, {"t": "One Year", "r": 23}], "DO NOT USE (257)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 22}], "Jack Collins/Unity Communications (250)": [{"t": "Multi Year", "r": 8}], "John King/Teligence (271)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Tilden Associates (259)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "SchulzLB (269)": [{"t": "One Year", "r": 15}, {"t": "Multi Year", "r": 18}], "Eric Hammare (277)": [{"t": "One Year", "r": 5}, {"t": "Multi Year", "r": 5}], "J Fallon Inc (284)": [{"t": "One Year", "r": 10}, {"t": "Multi Year", "r": 10}], "CDP-SNUG/Sandler (272)": [{"t": "One Year", "r": 20}, {"t": "Multi Year", "r": 20}], "Peleton Systems (249)": [{"t": "One Year", "r": 18}, {"t": "Multi Year", "r": 18}], "Next Generations Communications (251)": [{"t": "One Year", "r": 18}, {"t": "Multi Year", "r": 18}], "BSTM, LLC (186)": [{"t": "One Year", "r": 5}, {"t": "Multi Year", "r": 5}], "Spencer Hill Communications (278)": [{"t": "One Year", "r": 10}, {"t": "Multi Year", "r": 10}], "Optimized Communications Corp (290)": [{"t": "One Year", "r": 10}, {"t": "Multi Year", "r": 10}], "Cutting Edge Technologies (298)": [{"t": "One Year", "r": 15}, {"t": "Multi Year", "r": 15}], "Zeus Communicaitons (285)": [{"t": "One Year", "r": 10}, {"t": "Multi Year", "r": 10}], "Colligio - SK (273)": [{"t": "One Year", "r": 18}, {"t": "Multi Year", "r": 18}], "Jodi Colbourn (303)": [{"t": "One Year", "r": 14}, {"t": "Multi Year", "r": 14}], "MMG Communications (305)": [{"t": "One Year", "r": 10}, {"t": "Multi Year", "r": 10}], "Titanium Communications (304)": [{"t": "One Year", "r": 14}, {"t": "Multi Year", "r": 14}], "Princeton Hosted Solutions (311)": [{"t": "One Year", "r": 0}, {"t": "Multi Year", "r": 0}], "Align (300)": [{"t": "One Year", "r": 0}, {"t": "Multi Year", "r": 0}], "Lyn Zarella (315)": [{"t": "One Year", "r": 18}, {"t": "Multi Year", "r": 18}], "Innovative Technology Solutions (314)": [{"t": "One Year", "r": 18}, {"t": "Multi Year", "r": 18}], "GCC (320)": [{"t": "One Year", "r": 18}, {"t": "Multi Year", "r": 18}], "Master Group USA, LLC dba SarcoTel (313)": [{"t": "Multi Year", "r": 0}, {"t": "One Year", "r": 0}], "APEX Communications (316)": [{"t": "Multi Year", "r": 17}, {"t": "One Year", "r": 17}], "Colligio - LG (274)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Phillip Berta (295)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "North Atlantic Consultants (330)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "DO NOT USE (328)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 22}], "Diane Wassel (324)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "DO NOT USE (332)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 24}], "Happy Valley (334)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Acada Communications (333)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Whitecap Technologies (335)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "TJD Consulting (344)": [{"t": "Multi Year", "r": 15}, {"t": "One Year", "r": 15}], "MacroNet, LLC (347)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 16}], "RJR Communications LLC (343)": [{"t": "Multi Year", "r": 18}], "Lindsay McGrath (345)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 15}], "Shane Senior (341)": [{"t": "Multi Year", "r": 15}, {"t": "One Year", "r": 15}], "allConnex - AmpliX (348)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Datamart Inc (349)": [{"t": "Multi Year", "r": 18}], "UPSTACK - DVP Tech (350)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "AMD (354)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "Net7 - AmpliX (355)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 15}], "Syscom USA (308)": [{"t": "Multi Year", "r": 0}, {"t": "One Year", "r": 0}], "Connecticut Communications (342)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 16}], "Aurora Comm/Sandler (357)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Systems Engineering, Inc (359)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 15}], "Jason Rondeau (362)": [{"t": "Multi Year", "r": 20}], "Revolutionary Technologies (365)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "TeamLogicIT (366)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Uptime Communications (369)": [{"t": "Multi Year", "r": 18}], "SmartFiber (370)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 15}], "Axis Business Solutions (346)": [{"t": "Multi Year", "r": 14}, {"t": "One Year", "r": 14}], "ValuLink (371)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Evycom, LLC (367)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Tel-Data Systems (374)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 15}], "Ben Hart/Vive Communications (372)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 15}], "Pete Gautreau/Vive Communications (373)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 15}], "TechChoice (364)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 16}], "Holltel Communications (375)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 15}], "Vive Communications (378)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Enterprise Projects LLC (379)": [{"t": "Multi Year", "r": 10}, {"t": "One Year", "r": 10}], "DO NOT USE Dictronics, Inc (380)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 15}], "Dion Hines (381)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 15}], "Corporate Power Inc (383)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 15}], "Perssignia (382)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 15}], "Teledomani (233)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 19}], "Choice Communications (384)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Telosan (385)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 18}], "One Connect Inc (386)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 15}], "Comtel Group (391)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 22}], "TBI (395)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 22}], "PM Technology Inc (390)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Telco Holdings, Inc. (394)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 18}], "OnDemand (401)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 15}], "World Radio Telecommunications (407)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 16}], "Lancaster Communications Group (408)": [{"t": "One Year", "r": 18}, {"t": "Multi Year", "r": 22}], "Jewell Network Consulting (406)": [{"t": "One Year", "r": 16}, {"t": "Multi Year", "r": 18}], "PGH Networks (405)": [{"t": "One Year", "r": 20}, {"t": "Multi Year", "r": 16}], "Telarus (410)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 24}], "MoJo Consulting (403)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "All In One Telecom Services (411)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 20}], "AppSmart Agent Services (412)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 20}], "Chorus Communications (413)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 20}], "Computer Fellows (414)": [{"t": "Multi Year", "r": 16}, {"t": "One Year", "r": 16}], "Eastern Telephone and Telecommunications (ET&T) (416)": [{"t": "Multi Year", "r": 16}], "IITS Consulting (417)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 16}], "Hosted Telecom Solutions, Inc (393)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 15}], "Phone Check Inc (418)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Barfield Information Systems & Services Inc (BISS) (419)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Prospeed (396)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 15}], "NetLogix (392)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Method One Communications (415)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 16}], "ACS Services (420)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 15}], "Eddie Kane (422)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 18}], "Desktop Guerrillas (421)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 18}], "CIS Technical Services (423)": [{"t": "Multi Year", "r": 15}, {"t": "One Year", "r": 14}], "Hometown Telecom (424)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "USTelecenters (425)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 18}], "ITS Interactive Telecom Solutions (409)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 16}], "Metro Telecom (427)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 18}], "MD IP Solutions, LLC (426)": [{"t": "Multi Year", "r": 18}, {"t": "One Year", "r": 18}], "Advanced Telecom (430)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 18}], "Association Resource Group (ARG) (431)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 22}], "Global Communications Group, Inc. (GCG) (432)": [{"t": "One Year", "r": 22}, {"t": "Multi Year", "r": 22}], "Emendee Technologies (429)": [{"t": "Multi Year", "r": 16}, {"t": "One Year", "r": 14}], "I-Tech (301)": [{"t": "Multi Year", "r": 5}, {"t": "One Year", "r": 5}], "Telarus (OLD) (428)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 24}], "Avant - IP Stack (433)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 14}], "C2 (437)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 22}], "Intelisys (438)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 20}], "Cloud Concepts (440)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Avant (441)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 20}], "Gotham Cloud Inc (439)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Microcorp/AppSmart (442)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 22}], "Sandler Partners (445)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 24}], "Bridgepointe (451)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 24}], "Technology Source (452)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 24}], "Orkestra (454)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Global Telecom Solutions (GTS) (450)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 20}], "TCC (58)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 22}], "Mohawk Com/Ray Sullivan (20)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 22}], "Telecom Co-Op (456)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "Digital Management Solutions (461)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 21}], "Patriot Technology Services (462)": [{"t": "Multi Year", "r": 20}, {"t": "One Year", "r": 20}], "The Sagent Group (455)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 24}], "Bob Jr-APC (466)": [{"t": "Multi Year", "r": 17}, {"t": "One Year", "r": 17}], "Top Cloud Partners, LLC (467)": [{"t": "Multi Year", "r": 22}, {"t": "One Year", "r": 22}], "Innovative Business (469)": [{"t": "Multi Year", "r": 24}, {"t": "One Year", "r": 24}]};
 const PARTNER_NAMES = ["3D Advantage (185)", "A&A Consulting (226)", "ACE Technology Advisors, LLC (232)", "ACS Services (420)", "AMD (354)", "APC Services (190)", "APEX Communications (316)", "ARD (56)", "Acada Communications (333)", "Advanced Telecom (430)", "Advantage Wireless (200)", "Align (300)", "All In One Telecom Services (411)", "Alpha Delta Inc (240)", "AmpliX (107)", "AppSmart Agent Services (412)", "Association Resource Group (ARG) (431)", "Aurora Comm/Sandler (357)", "Avant (441)", "Avant - IP Stack (433)", "Axis Business Solutions (346)", "BGD Communications (223)", "BSTM, LLC (186)", "BT - Telecom (202)", "Barfield Information Systems & Services Inc (BISS) (419)", "Ben Hart/Vive Communications (372)", "Bernie Talkow (112)", "Bluewave (81)", "Bob Jr-APC (466)", "Brad Fackler (111)", "Bridgepointe (451)", "C2 (437)", "CDP-SNUG/Sandler (272)", "CDP/Sandler (101)", "CIS Technical Services (423)", "CMC Technology Group (222)", "CORE Communications (225)", "CRA Telecom (188)", "Choice Communications (384)", "Chorus Communications (413)", "Cloud Concepts (440)", "Colligio - LG (274)", "Colligio - SK (273)", "Colson Communications (229)", "Computer Fellows (414)", "Comtel Group (391)", "Connecticut Communications (342)", "Convergent Telecom/Bill Heinemann (8)", "Corporate Power Inc (383)", "Crosstar Network Solutions (247)", "Cutting Edge Technologies (298)", "DO NOT USE (257)", "DO NOT USE (328)", "DO NOT USE (332)", "DO NOT USE (96)", "DO NOT USE Dictronics, Inc (380)", "Datamart Inc (349)", "Deborah Noonan (156)", "Desktop Guerrillas (421)", "Diane Wassel (324)", "Digital Management Solutions (461)", "Dion Hines (381)", "Diversified Telecom Group (239)", "EB (191)", "Eastern Telephone and Telecommunications (ET&T) (416)", "Eddie Kane (422)", "Elaine White (21)", "Emendee Technologies (429)", "Enterprise Projects LLC (379)", "Eric Hammare (277)", "Evycom, LLC (367)", "FSJN Net (228)", "First Light Management (170)", "G&G Solutions (270)", "GCC (320)", "Garrett Douglas (47)", "Geroge Mont (11)", "Global Communications Group, Inc. (GCG) (432)", "Global Tel (147)", "Global Telecom Solutions (GTS) (450)", "Gotham Cloud Inc (439)", "HVC TELECOM LLC (76)", "Happy Valley (334)", "Harbor Networks (Boston Wireless) (201)", "Hogan Communications (99)", "Holltel Communications (375)", "Hometown Telecom (424)", "Hosted Telecom Solutions, Inc (393)", "House (87)", "House Account (22)", "I-Tech (301)", "IITS Consulting (417)", "ITS Interactive Telecom Solutions (409)", "Independent Business Communication (98)", "Infinite Telecom (97)", "Innovative Business (469)", "Innovative Technology Solutions (314)", "Integrated Solutions (92)", "Intelisys (438)", "J Fallon Inc (284)", "J&L Mgmt/John Giblo (39)", "JB (189)", "Jack Collins/Unity Communications (250)", "Jason Rondeau (362)", "Jewell Network Consulting (406)", "Jim Allan (231)", "Jodi Colbourn (303)", "John King/Teligence (271)", "KZ Telecom (151)", "Kevin Foley (64)", "Kevin Nee (12)", "Lancaster Communications Group (408)", "Lindsay McGrath (345)", "Little Family Holdings, LLC (181)", "Lyn Zarella (315)", "MD IP Solutions, LLC (426)", "MMG Communications (305)", "MacroNet, LLC (347)", "Master Group USA, LLC dba SarcoTel (313)", "Method One Communications (415)", "Metro Telecom (427)", "Microcorp/AppSmart (442)", "MoJo Consulting (403)", "Mohawk Com/Ray Sullivan (20)", "NEAT Communications (77)", "Net7 - AmpliX (355)", "NetLogix (392)", "Next Generations Communications (251)", "North Atlantic Consultants (330)", "NuSound (82)", "OnDemand (401)", "One Connect Inc (386)", "Optimized Communications Corp (290)", "Orkestra (454)", "P2/AppSmart (109)", "PGH Networks (405)", "PM Technology Inc (390)", "Patriot Technology Services (462)", "Peleton Systems (249)", "Perssignia (382)", "Pete Gautreau/Vive Communications (373)", "Phillip Berta (295)", "Phone Check Inc (418)", "Princeton Hosted Solutions (311)", "Prospeed (396)", "RJR Communications LLC (343)", "Revolutionary Technologies (365)", "Rob Kilkowski (28)", "Robert Darcy (83)", "Rod MacKenzie (27)", "Rondilo (86)", "SAM - Penske (84)", "Sandler Partners (445)", "SchulzLB (269)", "Sean Kelly/CBE (50)", "Shane Senior (341)", "Sharon Lorino (65)", "Sherman Networks (113)", "SmartFiber (370)", "Spencer Hill Communications (278)", "Stephen DePaula (199)", "Steve Cho (40)", "Steve Gibbs (69)", "Steve Luke (43)", "Strategic Partners Communications, Inc (246)", "Syscom USA (308)", "Systems Engineering, Inc (359)", "TBI (395)", "TCC (58)", "TDS Inc (95)", "TJD Consulting (344)", "TeamLogicIT (366)", "TechChoice (364)", "Technology Source (452)", "Ted Lagala (227)", "Tel-Data Systems (374)", "Telarus (410)", "Telarus (OLD) (428)", "Telco Holdings, Inc. (394)", "Tele-Dynamics (75)", "Telecom Co-Op (456)", "Telecom Consultants, LLP (117)", "Teledomani (233)", "Telequest (80)", "Telosan (385)", "The Sagent Group (455)", "Tilden Associates (259)", "Titanium Communications (304)", "Top Cloud Partners, LLC (467)", "UPSTACK - DVP Tech (350)", "USTelecenters (425)", "United Telecom (53)", "Uptime Communications (369)", "ValuLink (371)", "Veripoint (59)", "Vive Communications (378)", "Votacall (106)", "Whitecap Technologies (335)", "World Radio Telecommunications (407)", "World Technologies Inc/Tom Duncan (4)", "World Telecom/Adam Walter (93)", "Zeus Communicaitons (285)", "allConnex - AmpliX (348)"];
 
 
-(function buildPartnerDropdown() {
-  const sel = document.getElementById('partner-select');
-  PARTNER_NAMES.forEach(name => {
-    const opt = document.createElement('option');
-    opt.value = name;
-    opt.textContent = name;
-    sel.appendChild(opt);
+
+// ══ SHELL ════════════════════════════════════════════════════════════════
+const ADMIN_PW = 'nhcadmin2024';
+let adminUnlocked = false;
+
+function switchView(v) {
+  if (v === 'admin' && !adminUnlocked) { showLock(); return; }
+  document.getElementById('view-sales').style.display = v === 'sales' ? 'block' : 'none';
+  document.getElementById('view-admin').style.display = v === 'admin'  ? 'block' : 'none';
+  document.getElementById('nav-sales').classList.toggle('active', v === 'sales');
+  document.getElementById('nav-admin').classList.toggle('active', v === 'admin');
+  document.getElementById('nav-lock').classList.toggle('vis', v === 'admin');
+  if (v === 'admin') { try { aRender(); } catch(e){} }
+}
+function showLock() {
+  document.getElementById('view-lock').classList.add('show');
+  document.getElementById('lock-pw').value = '';
+  document.getElementById('lock-err').textContent = '';
+  setTimeout(() => document.getElementById('lock-pw').focus(), 80);
+}
+function checkPw() {
+  const pw = document.getElementById('lock-pw').value;
+  if (pw === ADMIN_PW) {
+    adminUnlocked = true;
+    document.getElementById('view-lock').classList.remove('show');
+    switchView('admin');
+  } else {
+    const inp = document.getElementById('lock-pw');
+    inp.classList.add('err');
+    document.getElementById('lock-err').textContent = 'Incorrect password.';
+    setTimeout(() => inp.classList.remove('err'), 400);
+    inp.value = ''; inp.focus();
+  }
+}
+function lockAdmin() {
+  adminUnlocked = false;
+  document.getElementById('view-sales').style.display = 'block';
+  document.getElementById('view-admin').style.display = 'none';
+  document.getElementById('nav-sales').classList.add('active');
+  document.getElementById('nav-admin').classList.remove('active');
+  document.getElementById('nav-lock').classList.remove('vis');
+}
+// Start on sales view
+document.getElementById('view-sales').style.display = 'block';
+
+
+// ══ S VIEW ══════════════════════════════════════════
+let sTerm = 36, sICB = false, sCommRate = 0.22;
+
+function bookMRC_s(s) { return sICB?((sTerm===12?s.icb12:s.icb36)):(sTerm===12?s.std12:s.std36); }
+function effectiveMRC_s(s) { const v=parseFloat(document.getElementById('s-custom-'+s.key).value); return(!isNaN(v)&&v>0)?v:bookMRC_s(s); }
+function isCustom_s(s) { const v=parseFloat(document.getElementById('s-custom-'+s.key).value); return !isNaN(v)&&v>0&&Math.abs(v-bookMRC_s(s))>0.001; }
+function getQty_s(k) { return Math.max(0,parseInt(document.getElementById('s-qty-'+k).value)||0); }
+
+function updateBooks_s() {
+  SEATS.forEach(s=>document.getElementById('s-book-'+s.key).textContent=fmt(bookMRC_s(s)));
+}
+
+function onSCustom(key) {
+  const s=SEATS.find(x=>x.key===key);
+  const c=isCustom_s(s);
+  document.getElementById('s-badge-'+key).style.display=c?'inline-block':'none';
+  document.getElementById('s-card-'+key).classList.toggle('custom-on',c);
+  sRender();
+}
+
+function sSetTerm(t) {
+  sTerm=t;
+  document.querySelectorAll('#s-seg button').forEach(b=>b.classList.toggle('active',+b.dataset.t===t));
+  updateBooks_s(); sRender();
+}
+
+function sToggleICB() {
+  sICB=!sICB;
+  document.getElementById('s-icb-toggle').classList.toggle('on',sICB);
+  document.getElementById('s-icb-label').textContent=sICB?'ICB MRC':'Standard MRC';
+  updateBooks_s(); sRender();
+}
+
+function calcDeal_s(spifMult) {
+  let totMRC=0,totProfit=0,totSpif=0;
+  SEATS.forEach(s=>{
+    const q=getQty_s(s.key); if(!q)return;
+    const m=effectiveMRC_s(s),comm=m*sCommRate,profit=(m-s.cost-comm)*q*sTerm;
+    totMRC+=m*q; totProfit+=profit; totSpif+=m*spifMult*q;
   });
+  const remaining=totProfit-totSpif;
+  return {totMRC,totProfit,totSpif,remaining,marginAfterSpif:totMRC*sTerm>0?remaining/(totMRC*sTerm):0};
+}
+
+function calcSeatMargin_s(s,spifMult) {
+  const q=getQty_s(s.key); if(!q)return 0;
+  const m=effectiveMRC_s(s),comm=m*sCommRate,mp=m-s.cost-comm;
+  const rem=mp*q*sTerm-m*spifMult*q;
+  return m*q*sTerm>0?rem/(m*q*sTerm):0;
+}
+
+function calcMargin_s(spifMult) { return calcDeal_s(spifMult).marginAfterSpif; }
+
+function sRender() {
+  const spifMult=parseFloat(document.getElementById('s-spif-mult').value)||5;
+  const d=calcDeal_s(spifMult);
+  // Update book rates
+  updateBooks_s();
+
+  // ── Health panel ──
+  const margin = d.marginAfterSpif;
+  const v = verdict(margin);
+  const hasSeats = SEATS.some(s=>getQty_s(s.key)>0);
+  document.getElementById('s-empty-panel').style.display = hasSeats?'none':'block';
+  document.getElementById('s-health-panel').style.display = hasSeats?'block':'none';
+  if (!hasSeats) return;
+  const hIcon=document.getElementById('s-h-icon');
+  hIcon.textContent=v.icon; hIcon.className='health-icon '+v.hcls;
+  const hVerd=document.getElementById('s-h-verdict');
+  hVerd.textContent=v.label; hVerd.className='h-verdict '+v.tcls;
+  document.getElementById('s-h-sub').textContent=v.sub;
+  let totMRC2=0,totSeats2=0,totSPIF2=0;
+  SEATS.forEach(s=>{ const q=getQty_s(s.key); if(!q)return; totMRC2+=effectiveMRC_s(s)*q; totSeats2+=q; totSPIF2+=effectiveMRC_s(s)*spifMult*q; });
+  document.getElementById('s-deal-strip').innerHTML=`
+    <div class="strip-item"><div class="strip-lbl">Total MRC</div><div class="strip-val">${fmt(totMRC2)}</div></div>
+    <div class="strip-item"><div class="strip-lbl">Total seats</div><div class="strip-val">${totSeats2}</div></div>
+    <div class="strip-item"><div class="strip-lbl">Term</div><div class="strip-val">${sTerm}m</div></div>
+    <div class="strip-item"><div class="strip-lbl">SPIF payout</div><div class="strip-val">${fmt(totSPIF2)}</div></div>
+    <div class="strip-item"><div class="strip-lbl">Pricing</div><div class="strip-val" style="font-family:var(--font);font-size:14px">${sICB?'ICB':'Standard'}</div></div>
+  `;
+  const active2=SEATS.filter(s=>getQty_s(s.key)>0);
+  document.getElementById('s-seat-verdicts').innerHTML=active2.map(s=>{
+    const sm=calcSeatMargin_s(s,spifMult), sv=verdict(sm), q=getQty_s(s.key);
+    const cval=parseFloat(document.getElementById('s-custom-'+s.key).value);
+    const isC=!isNaN(cval)&&cval>0&&Math.abs(cval-bookMRC_s(s))>0.001;
+    const custom=isC?' <span style="font-size:10px;color:var(--accent)">(custom price)</span>':'';
+    return `<div class="sv-row"><div class="sv-left"><div class="sv-name">${s.name}${custom}</div><div class="sv-detail">${q} seat${q>1?'s':''} &nbsp;&bull;&nbsp; ${fmt(effectiveMRC_s(s))}/seat</div></div><span class="badge ${sv.cls}">${sv.label}</span></div>`;
+  }).join('');
+  const margins2=[3,4,5,6,7,8,9,10].map(m=>calcMargin_s(m));
+  const maxM=Math.max(...margins2,0.01);
+  document.getElementById('s-spif-rows').innerHTML=[3,4,5,6,7,8,9,10].map((m,i)=>{
+    const mg=margins2[i],sv=verdict(mg),sel=Math.abs(m-spifMult)<0.01;
+    const pct2=Math.max(0,Math.min(100,(mg/maxM)*100));
+    const bc=mg>=0.28?'var(--green)':mg>=0.25?'var(--blue)':'var(--red)';
+    return `<div class="spif-row${sel?' selected':''}"><span class="spif-mult-label">${m}x${sel?' ◀':''}</span><div class="spif-bar-wrap"><div class="spif-bar" style="width:${pct2}%;background:${bc}"></div></div><span class="badge ${sv.cls} spif-badge">${sv.label}</span></div>`;
+  }).join('');
+
+}
+
+// Partner handling for s
+function onSPartnerChange() {
+  const name=document.getElementById('s-partner-select').value;
+  const tsel=document.getElementById('s-term-select');
+  tsel.innerHTML='';
+  document.getElementById('s-partner-chips').innerHTML='<span class="pchip-none">Select a product type</span>';
+  if(!name){ tsel.innerHTML='<option value="">— Select partner first —</option>'; document.getElementById('s-partner-chips').innerHTML='<span class="pchip-none">No partner selected</span>'; return; }
+  const blank=document.createElement('option'); blank.value=''; blank.textContent='— Select product type —'; tsel.appendChild(blank);
+  (PARTNERS[name]||[]).forEach(o=>{ const el=document.createElement('option'); el.value=JSON.stringify(o); el.textContent=o.t==='Multi Year'?'36-month (Multi Year)':'12-month (One Year)'; tsel.appendChild(el); });
+}
+
+function onSTermChange() {
+  const val=document.getElementById('s-term-select').value; if(!val)return;
+  const o=JSON.parse(val);
+  sSetTerm(o.t==='Multi Year'?36:12);
+  sCommRate=o.r/100;
+  document.getElementById('s-partner-chips').innerHTML=`<span class="pchip">${o.r}% comp rate <span class="pchip-rate">&bull; ${o.t==='Multi Year'?'36m':'12m'} term</span></span>`;
+  sRender();
+}
+
+// Init s
+(function initS(){
+  const sel=document.getElementById('s-partner-select');
+  PARTNER_NAMES.forEach(name=>{ const opt=document.createElement('option'); opt.value=name; opt.textContent=name; sel.appendChild(opt); });
+  updateBooks_s();
+  sRender();
 })();
 
-function onPartnerChange() {
-  const name = document.getElementById('partner-select').value;
-  const termSel = document.getElementById('term-select');
-  termSel.innerHTML = '';
-  if (!name) {
-    termSel.innerHTML = '<option value="">— Select partner first —</option>';
-    document.getElementById('partner-chips').innerHTML = '<span class="pchip-none">No partner selected</span>';
-    return;
-  }
-  const opts = PARTNERS[name] || [];
-  opts.forEach(o => {
-    const el = document.createElement('option');
-    el.value = JSON.stringify(o);
-    el.textContent = (o.t === 'Multi Year' ? '36-month (Multi Year)' : '12-month (One Year)');
-    termSel.appendChild(el);
-  });
-  onTermChange();
+
+// ══ A VIEW ══════════════════════════════════════════
+let aTerm = 36, aICB = false, aCommRate = 0.22;
+
+function bookMRC_a(s) { return aICB?((aTerm===12?s.icb12:s.icb36)):(aTerm===12?s.std12:s.std36); }
+function effectiveMRC_a(s) { const v=parseFloat(document.getElementById('a-custom-'+s.key).value); return(!isNaN(v)&&v>0)?v:bookMRC_a(s); }
+function isCustom_a(s) { const v=parseFloat(document.getElementById('a-custom-'+s.key).value); return !isNaN(v)&&v>0&&Math.abs(v-bookMRC_a(s))>0.001; }
+function getQty_a(k) { return Math.max(0,parseInt(document.getElementById('a-qty-'+k).value)||0); }
+
+function updateBooks_a() {
+  SEATS.forEach(s=>document.getElementById('a-book-'+s.key).textContent=fmt(bookMRC_a(s)));
 }
 
-function onTermChange() {
-  const termSel = document.getElementById('term-select');
-  const val = termSel.value;
-  if (!val) return;
-  const o = JSON.parse(val);
-  const newTerm = o.t === 'Multi Year' ? 36 : 12;
-  term = newTerm;
-  document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('active', +b.dataset.t === newTerm));
-  commissionRate = o.r / 100;
-  document.getElementById('partner-chips').innerHTML =
-    `<span class="pchip">${o.r}% comp rate <span class="pchip-rate">&bull; ${o.t === 'Multi Year' ? '36m' : '12m'} term</span></span>`;
-  updateBookRates();
-  render();
+function onACustom(key) {
+  const s=SEATS.find(x=>x.key===key);
+  const c=isCustom_a(s);
+  document.getElementById('a-badge-'+key).style.display=c?'inline-block':'none';
+  document.getElementById('a-card-'+key).classList.toggle('custom-on',c);
+  aRender();
 }
+
+function aSetTerm(t) {
+  aTerm=t;
+  document.querySelectorAll('#a-seg button').forEach(b=>b.classList.toggle('active',+b.dataset.t===t));
+  updateBooks_a(); aRender();
+}
+
+function aToggleICB() {
+  aICB=!aICB;
+  document.getElementById('a-icb-toggle').classList.toggle('on',aICB);
+  document.getElementById('a-icb-label').textContent=aICB?'ICB MRC':'Standard MRC';
+  updateBooks_a(); aRender();
+}
+
+function calcDeal_a(spifMult) {
+  let totMRC=0,totProfit=0,totSpif=0;
+  SEATS.forEach(s=>{
+    const q=getQty_a(s.key); if(!q)return;
+    const m=effectiveMRC_a(s),comm=m*aCommRate,profit=(m-s.cost-comm)*q*aTerm;
+    totMRC+=m*q; totProfit+=profit; totSpif+=m*spifMult*q;
+  });
+  const remaining=totProfit-totSpif;
+  return {totMRC,totProfit,totSpif,remaining,marginAfterSpif:totMRC*aTerm>0?remaining/(totMRC*aTerm):0};
+}
+
+function calcSeatMargin_a(s,spifMult) {
+  const q=getQty_a(s.key); if(!q)return 0;
+  const m=effectiveMRC_a(s),comm=m*aCommRate,mp=m-s.cost-comm;
+  const rem=mp*q*aTerm-m*spifMult*q;
+  return m*q*aTerm>0?rem/(m*q*aTerm):0;
+}
+
+function calcMargin_a(spifMult) { return calcDeal_a(spifMult).marginAfterSpif; }
+
+function aRender() {
+  const spifMult=parseFloat(document.getElementById('a-spif-mult').value)||5;
+  const d=calcDeal_a(spifMult);
+  // Update book rates
+  updateBooks_a();
+
+  // ── Summary cards ──
+  const v = verdict(d.marginAfterSpif);
+  let totComm=0; SEATS.forEach(s=>{ const q=getQty_a(s.key); if(q) totComm+=effectiveMRC_a(s)*aCommRate*q; });
+  const summaryItems=[
+    {lbl:'Total MRC',val:fmt(d.totMRC)},
+    {lbl:'Deal revenue ('+aTerm+'m)',val:fmt(d.totMRC*aTerm)},
+    {lbl:'Commission/month',val:fmt(totComm)},
+    {lbl:'Deal profit after comm.',val:fmt(d.totProfit)},
+    {lbl:'SPIF payout ('+spifMult+'x)',val:fmt(d.totSpif)},
+    {lbl:'Remaining profit',val:fmt(d.remaining)},
+    {lbl:'Margin after comm.',val:pct(d.totMRC*aTerm>0?d.totProfit/(d.totMRC*aTerm):0)},
+    {lbl:'Margin after SPIF',val:pct(d.marginAfterSpif),verdict:v,key:true},
+  ];
+  document.getElementById('a-summary-grid').innerHTML=summaryItems.map(c=>
+    `<div class="metric${c.key?' key-metric':''}"><div class="m-lbl">${c.lbl}</div><div class="m-val">${c.val}</div>${c.verdict?`<span class="badge ${c.verdict.cls} m-badge">${c.verdict.label}</span>`:''}</div>`
+  ).join('');
+
+  // ── Per-seat breakdown ──
+  const active=SEATS.filter(s=>getQty_a(s.key)>0);
+  if(!active.length){
+    document.getElementById('a-breakdown-tbody').innerHTML='<tr><td colspan="10" class="empty-state">Set seat quantities above</td></tr>';
+  } else {
+    let rows='',totM=0,totC=0,totDP=0,totSP=0,totR=0;
+    active.forEach(s=>{
+      const q=getQty_a(s.key),m=effectiveMRC_a(s),comm=m*aCommRate,mp=m-s.cost-comm;
+      const dp=mp*q*aTerm,sp=m*spifMult*q,rem=dp-sp;
+      const mg=m*q*aTerm>0?rem/(m*q*aTerm):0, vv=verdict(mg);
+      const cval=parseFloat(document.getElementById('a-custom-'+s.key).value);
+      const isC=!isNaN(cval)&&cval>0&&Math.abs(cval-bookMRC_a(s))>0.001;
+      const ct=isC?'<span class="custom-tag">custom</span>':'';
+      totM+=m*q;totC+=comm*q;totDP+=dp;totSP+=sp;totR+=rem;
+      rows+=`<tr><td>${s.name}<span class="seat-label-code">${s.code}</span></td><td>${q}</td><td>${fmt(m)}${ct}</td><td>${fmt(comm)}</td><td>${fmt(mp)}/seat</td><td>${fmt(dp)}</td><td>${fmt(sp)}</td><td>${fmt(rem)}</td><td>${pct(mg)}</td><td><span class="badge ${vv.cls}">${vv.label}</span></td></tr>`;
+    });
+    const totMg=totM*aTerm>0?totR/(totM*aTerm):0,tv=verdict(totMg);
+    rows+=`<tr class="total-row"><td>Total</td><td>—</td><td>${fmt(totM)}</td><td>${fmt(totC)}</td><td>—</td><td>${fmt(totDP)}</td><td>${fmt(totSP)}</td><td>${fmt(totR)}</td><td>${pct(totMg)}</td><td><span class="badge ${tv.cls}">${tv.label}</span></td></tr>`;
+    document.getElementById('a-breakdown-tbody').innerHTML=rows;
+  }
+  // ── SPIF sensitivity ──
+  const hasS=SEATS.some(s=>getQty_a(s.key)>0);
+  document.getElementById('a-spif-tbody').innerHTML=[3,4,5,6,7,8,9,10].map(m=>{
+    const dd=calcDeal_a(m),vv=verdict(dd.marginAfterSpif),sel=Math.abs(m-spifMult)<0.01;
+    return `<tr class="${sel?'spif-selected':''}"><td>${m}x${sel?' ◀':''}</td><td>${fmt(dd.totSpif)}</td><td>${fmt(dd.totProfit)}</td><td>${fmt(dd.remaining)}</td><td>${pct(dd.marginAfterSpif)}</td><td><span class="badge ${vv.cls}">${vv.label}</span></td></tr>`;
+  }).join('');
+}
+
+// Partner handling for a
+function onAPartnerChange() {
+  const name=document.getElementById('a-partner-select').value;
+  const tsel=document.getElementById('a-term-select');
+  tsel.innerHTML='';
+  document.getElementById('a-partner-chips').innerHTML='<span class="pchip-none">Select a product type</span>';
+  if(!name){ tsel.innerHTML='<option value="">— Select partner first —</option>'; document.getElementById('a-partner-chips').innerHTML='<span class="pchip-none">No partner selected</span>'; return; }
+  const blank=document.createElement('option'); blank.value=''; blank.textContent='— Select product type —'; tsel.appendChild(blank);
+  (PARTNERS[name]||[]).forEach(o=>{ const el=document.createElement('option'); el.value=JSON.stringify(o); el.textContent=o.t==='Multi Year'?'36-month (Multi Year)':'12-month (One Year)'; tsel.appendChild(el); });
+}
+
+function onATermChange() {
+  const val=document.getElementById('a-term-select').value; if(!val)return;
+  const o=JSON.parse(val);
+  aSetTerm(o.t==='Multi Year'?36:12);
+  aCommRate=o.r/100;
+  document.getElementById('a-partner-chips').innerHTML=`<span class="pchip">${o.r}% comp rate <span class="pchip-rate">&bull; ${o.t==='Multi Year'?'36m':'12m'} term</span></span>`;
+  aRender();
+}
+
+// Init a
+(function initA(){
+  const sel=document.getElementById('a-partner-select');
+  PARTNER_NAMES.forEach(name=>{ const opt=document.createElement('option'); opt.value=name; opt.textContent=name; sel.appendChild(opt); });
+  updateBooks_a();
+  aRender();
+})();
 
 </script>
 </body>
