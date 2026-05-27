@@ -176,6 +176,26 @@ tbody tr.total-row td { background:var(--surface2); font-weight:500; border-top:
 .empty-panel { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:40px; text-align:center; color:var(--muted); font-size:13px; }
 .spif-section-title { font-size:10px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
 
+
+/* ── Install calculator ── */
+.install-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; margin-bottom:16px; }
+.install-card { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius); padding:14px 16px; }
+.install-card .i-lbl { font-size:11px; color:var(--muted); margin-bottom:4px; }
+.install-card .i-val { font-size:20px; font-weight:300; font-family:var(--mono); letter-spacing:-.02em; }
+.install-card .i-sub { font-size:11px; color:var(--muted); margin-top:3px; }
+.install-inputs { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px; align-items:flex-end; }
+.install-inputs .ctrl-group { flex:1; min-width:140px; }
+.install-inputs input { width:100%; background:var(--surface2); border:0.5px solid var(--border2); border-radius:var(--radius); color:var(--text); font-family:var(--mono); font-size:14px; padding:8px 12px; outline:none; transition:border-color .15s; }
+.install-inputs input:focus { border-color:var(--accent); }
+.tier-hint { font-size:11px; color:var(--muted); padding:10px 14px; background:var(--surface2); border-radius:var(--radius); line-height:1.8; }
+.tier-hint span { color:var(--text); font-family:var(--mono); }
+.self-install-row { display:flex; align-items:center; gap:12px; margin-bottom:14px; background:var(--surface2); border:0.5px solid var(--border); border-radius:var(--radius); padding:10px 14px; }
+.self-install-row .si-lbl-prefix { font-size:11px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-right:2px; }
+.self-install-row .si-label { font-size:13px; font-weight:500; color:var(--text); }
+.self-install-row .si-label.active { color:var(--green); }
+.install-disabled { opacity:0.35; pointer-events:none; }
+.self-install-badge { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:500; border:0.5px solid var(--green-border); background:var(--green-dim); color:var(--green); }
+
 footer { margin-top:60px; padding-top:20px; border-top:0.5px solid var(--border); font-size:11px; color:var(--muted); display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
 
 </style>
@@ -333,6 +353,31 @@ footer { margin-top:60px; padding-top:20px; border-top:0.5px solid var(--border)
   </div>
 
   <div class="section">
+    <div class="section-header">Install &amp; travel</div>
+    <div class="self-install-row">
+      <span class="si-lbl-prefix">Install type</span>
+      <button class="toggle" id="s-self-install-toggle" onclick="toggleSelfInstall('s')" aria-label="Toggle self install"></button>
+      <span class="si-label" id="s-self-install-label">NHC installs — enter sites &amp; phones below</span>
+    </div>
+    <div id="s-install-inputs" class="install-inputs" style="margin-bottom:10px">
+      <div class="ctrl-group" style="flex:1;min-width:160px">
+        <div class="ctrl-label">Number of sites</div>
+        <input type="number" id="s-sites" min="1" value="1" oninput="sRender()">
+      </div>
+      <div class="ctrl-group" style="flex:1;min-width:160px">
+        <div class="ctrl-label">Avg phones / site</div>
+        <input type="number" id="s-phones" min="1" value="5" oninput="sRender()">
+      </div>
+      <div class="tier-hint" style="flex:2">
+        <span>1–5</span> = 1 hr &nbsp;&bull;&nbsp;
+        <span>6–20</span> = 2 hrs &nbsp;&bull;&nbsp;
+        <span>21–50</span> = 4 hrs
+      </div>
+    </div>
+    <div class="seat-verdicts" id="s-install-verdict"></div>
+  </div>
+
+  <div class="section">
     <div class="section-header">Deal health</div>
     <div class="empty-panel" id="s-empty-panel">
       <div style="font-size:28px;margin-bottom:10px">🧮</div>
@@ -348,12 +393,12 @@ footer { margin-top:60px; padding-top:20px; border-top:0.5px solid var(--border)
         </div>
       </div>
       <div class="deal-strip" id="s-deal-strip"></div>
-      <div style="margin-bottom:10px">
+      <div style="margin-bottom:16px">
         <div class="spif-section-title">Per seat type</div>
         <div class="seat-verdicts" id="s-seat-verdicts"></div>
       </div>
       <div>
-        <div class="spif-section-title">SPIF range — 3x through 10x</div>
+        <div class="spif-section-title">SPIF range — 0x through 10x — with install</div>
         <div class="spif-rows" id="s-spif-rows"></div>
       </div>
     </div>
@@ -495,6 +540,39 @@ footer { margin-top:60px; padding-top:20px; border-top:0.5px solid var(--border)
   </div>
 
   <div class="section">
+    <div class="section-header">Install &amp; travel estimate</div>
+    <div class="self-install-row">
+      <span class="si-lbl-prefix">Install type</span>
+      <button class="toggle" id="a-self-install-toggle" onclick="toggleSelfInstall('a')" aria-label="Toggle self install"></button>
+      <span class="si-label" id="a-self-install-label">NHC installs — enter sites &amp; phones below</span>
+    </div>
+    <div id="a-install-inputs" class="install-inputs">
+      <div class="ctrl-group">
+        <div class="ctrl-label">Number of sites</div>
+        <input type="number" id="a-sites" min="1" value="1" oninput="aRenderInstall()">
+      </div>
+      <div class="ctrl-group">
+        <div class="ctrl-label">Avg phones per site</div>
+        <input type="number" id="a-phones" min="1" value="5" oninput="aRenderInstall()">
+      </div>
+      <div class="tier-hint">
+        <span>1–5 phones</span> = 1 hr &nbsp;&bull;&nbsp;
+        <span>6–20 phones</span> = 2 hrs &nbsp;&bull;&nbsp;
+        <span>21–50 phones</span> = 4 hrs &nbsp;&bull;&nbsp;
+        Travel fee <span>$125/site</span> &nbsp;&bull;&nbsp; Labor <span>$175/hr</span>
+      </div>
+    </div>
+    <div class="install-grid" id="a-install-cards">
+      <div class="install-card"><div class="i-lbl">Labor hours / site</div><div class="i-val" id="a-inst-hrs">—</div></div>
+      <div class="install-card"><div class="i-lbl">Labor cost / site</div><div class="i-val" id="a-inst-labor">—</div></div>
+      <div class="install-card"><div class="i-lbl">Travel cost / site</div><div class="i-val">$125.00</div></div>
+      <div class="install-card"><div class="i-lbl">Total cost / site</div><div class="i-val" id="a-inst-persite">—</div></div>
+      <div class="install-card"><div class="i-lbl">Number of sites</div><div class="i-val" id="a-inst-sites">—</div></div>
+      <div class="install-card" style="border-color:var(--accent-border)"><div class="i-lbl">Total install cost</div><div class="i-val" style="color:var(--accent)" id="a-inst-total">—</div><div class="i-sub" id="a-inst-sub"></div></div>
+    </div>
+  </div>
+
+  <div class="section">
     <div class="section-header">Deal summary</div>
     <div class="summary-grid" id="a-summary-grid">
       <div class="empty-state" style="grid-column:1/-1">Enter seat quantities to see results</div>
@@ -516,12 +594,13 @@ footer { margin-top:60px; padding-top:20px; border-top:0.5px solid var(--border)
   </div>
 
   <div class="section">
-    <div class="section-header">SPIF sensitivity — 3x through 10x — total deal</div>
+    <div class="section-header">SPIF sensitivity — 0x through 10x — total deal</div>
     <div class="tbl-wrap">
       <table>
         <thead><tr>
           <th>Multiple</th><th>SPIF payout</th><th>Deal profit after comm.</th>
           <th>Remaining after SPIF</th><th>Margin after SPIF</th><th>Verdict</th>
+          <th>Margin w/install</th><th>Verdict w/install</th>
         </tr></thead>
         <tbody id="a-spif-tbody"><tr><td colspan="6" class="empty-state">Set seat quantities above</td></tr></tbody>
       </table>
@@ -557,17 +636,39 @@ function verdict(m) {
 
 // CFM: $0 cost so verdict is purely price vs rate card
 function cfmVerdict(effectivePrice, stdPrice, icbPrice) {
-  if (effectivePrice >= stdPrice) return {label:'Healthy',      cls:'v-good', hcls:'hc-good', tcls:'txt-good', icon:'✅', sub:'This deal works. Go close it.'};
-  if (effectivePrice >  icbPrice) return {label:'Aggressive',   cls:'v-agg',  hcls:'hc-agg',  tcls:'txt-agg',  icon:'💪', sub:'Tight but approvable. Good for competitive situations.'};
-  return                                  {label:'Needs review', cls:'v-bad',  hcls:'hc-bad',  tcls:'txt-bad',  icon:'🚫', sub:'Priced below ICB — needs manager review.'};
+  if (effectivePrice >= stdPrice) return {label:'Healthy',      cls:'v-good', hcls:'hc-good', tcls:'txt-good', icon:'✅', sub:'At or above standard rate.'};
+  if (effectivePrice >  icbPrice) return {label:'Aggressive',   cls:'v-agg',  hcls:'hc-agg',  tcls:'txt-agg',  icon:'💪', sub:'Below standard (' + fmt(stdPrice) + ') but above ICB (' + fmt(icbPrice) + ').'};
+  return                                  {label:'Needs review', cls:'v-bad',  hcls:'hc-bad',  tcls:'txt-bad',  icon:'🚫', sub:'Priced at or below ICB (' + fmt(icbPrice) + '). Requires special approval.', reason:'below-icb'};
+}
+
+// Builds a specific reason string for the overall deal banner
+function overallReason(marginSpif, marginInstall, installCost) {
+  const reasons = [];
+  if (marginSpif < 0.25)  reasons.push('margin after SPIF is ' + pct(marginSpif));
+  else if (marginSpif < 0.28) reasons.push('margin after SPIF is ' + pct(marginSpif) + ' (aggressive)');
+  if (installCost > 0 && marginInstall < marginSpif) {
+    if (marginInstall < 0.25) reasons.push('install (' + fmt(installCost) + ') pushes margin to ' + pct(marginInstall));
+    else if (marginInstall < 0.28) reasons.push('install (' + fmt(installCost) + ') brings margin to ' + pct(marginInstall));
+  }
+  if (reasons.length === 0) return 'Deal margin looks good.';
+  return reasons.join('; ') + '.';
+}
+
+function icbWarning(anyBelowICB) {
+  return anyBelowICB ? '⚠️ One or more seats priced below ICB — pricing approval required.' : '';
 }
 
 // Per-seat verdict: ICB floor is a hard Needs Review regardless of margin math
 // If price is at or above ICB, margin math decides the verdict
 function seatVerdict(effectivePrice, icbPrice, marginAfterSpif) {
-  if (effectivePrice < icbPrice - 0.001)
-    return {label:'Needs review', cls:'v-bad', hcls:'hc-bad', tcls:'txt-bad', icon:'🚫', sub:'Priced below ICB — needs manager review.'};
-  return verdict(marginAfterSpif);
+  const v = verdict(marginAfterSpif);
+  const belowICB = effectivePrice < icbPrice - 0.001;
+  // Margin verdict drives the badge; ICB is shown as a sub-note
+  if (v.cls === 'v-bad')
+    return {...v, sub:'Margin ' + pct(marginAfterSpif) + ' after comp & SPIF — below 25%.' + (belowICB ? ' Also below ICB (' + fmt(icbPrice) + ').' : '')};
+  if (belowICB)
+    return {...v, sub:(v.sub||'') + ' ⚠️ Below ICB (' + fmt(icbPrice) + ') — pricing approval needed.'};
+  return v;
 }
 
 // Partner data
@@ -575,6 +676,9 @@ const PARTNERS = {"BGD Communications (223)": [{"t": "Multi Year", "r": 18}, {"t
 const PARTNER_NAMES = ["3D Advantage (185)", "A&A Consulting (226)", "ACE Technology Advisors, LLC (232)", "ACS Services (420)", "AMD (354)", "APC Services (190)", "APEX Communications (316)", "ARD (56)", "Acada Communications (333)", "Advanced Telecom (430)", "Advantage Wireless (200)", "Align (300)", "All In One Telecom Services (411)", "Alpha Delta Inc (240)", "AmpliX (107)", "AppSmart Agent Services (412)", "Association Resource Group (ARG) (431)", "Aurora Comm/Sandler (357)", "Avant (441)", "Avant - IP Stack (433)", "Axis Business Solutions (346)", "BGD Communications (223)", "BSTM, LLC (186)", "BT - Telecom (202)", "Barfield Information Systems & Services Inc (BISS) (419)", "Ben Hart/Vive Communications (372)", "Bernie Talkow (112)", "Bluewave (81)", "Bob Jr-APC (466)", "Brad Fackler (111)", "Bridgepointe (451)", "C2 (437)", "CDP-SNUG/Sandler (272)", "CDP/Sandler (101)", "CIS Technical Services (423)", "CMC Technology Group (222)", "CORE Communications (225)", "CRA Telecom (188)", "Choice Communications (384)", "Chorus Communications (413)", "Cloud Concepts (440)", "Colligio - LG (274)", "Colligio - SK (273)", "Colson Communications (229)", "Computer Fellows (414)", "Comtel Group (391)", "Connecticut Communications (342)", "Convergent Telecom/Bill Heinemann (8)", "Corporate Power Inc (383)", "Crosstar Network Solutions (247)", "Cutting Edge Technologies (298)", "DO NOT USE (257)", "DO NOT USE (328)", "DO NOT USE (332)", "DO NOT USE (96)", "DO NOT USE Dictronics, Inc (380)", "Datamart Inc (349)", "Deborah Noonan (156)", "Desktop Guerrillas (421)", "Diane Wassel (324)", "Digital Management Solutions (461)", "Dion Hines (381)", "Diversified Telecom Group (239)", "EB (191)", "Eastern Telephone and Telecommunications (ET&T) (416)", "Eddie Kane (422)", "Elaine White (21)", "Emendee Technologies (429)", "Enterprise Projects LLC (379)", "Eric Hammare (277)", "Evycom, LLC (367)", "FSJN Net (228)", "First Light Management (170)", "G&G Solutions (270)", "GCC (320)", "Garrett Douglas (47)", "Geroge Mont (11)", "Global Communications Group, Inc. (GCG) (432)", "Global Tel (147)", "Global Telecom Solutions (GTS) (450)", "Gotham Cloud Inc (439)", "HVC TELECOM LLC (76)", "Happy Valley (334)", "Harbor Networks (Boston Wireless) (201)", "Hogan Communications (99)", "Holltel Communications (375)", "Hometown Telecom (424)", "Hosted Telecom Solutions, Inc (393)", "House (87)", "House Account (22)", "I-Tech (301)", "IITS Consulting (417)", "ITS Interactive Telecom Solutions (409)", "Independent Business Communication (98)", "Infinite Telecom (97)", "Innovative Business (469)", "Innovative Technology Solutions (314)", "Integrated Solutions (92)", "Intelisys (438)", "J Fallon Inc (284)", "J&L Mgmt/John Giblo (39)", "JB (189)", "Jack Collins/Unity Communications (250)", "Jason Rondeau (362)", "Jewell Network Consulting (406)", "Jim Allan (231)", "Jodi Colbourn (303)", "John King/Teligence (271)", "KZ Telecom (151)", "Kevin Foley (64)", "Kevin Nee (12)", "Lancaster Communications Group (408)", "Lindsay McGrath (345)", "Little Family Holdings, LLC (181)", "Lyn Zarella (315)", "MD IP Solutions, LLC (426)", "MMG Communications (305)", "MacroNet, LLC (347)", "Master Group USA, LLC dba SarcoTel (313)", "Method One Communications (415)", "Metro Telecom (427)", "Microcorp/AppSmart (442)", "MoJo Consulting (403)", "Mohawk Com/Ray Sullivan (20)", "NEAT Communications (77)", "Net7 - AmpliX (355)", "NetLogix (392)", "Next Generations Communications (251)", "North Atlantic Consultants (330)", "NuSound (82)", "OnDemand (401)", "One Connect Inc (386)", "Optimized Communications Corp (290)", "Orkestra (454)", "P2/AppSmart (109)", "PGH Networks (405)", "PM Technology Inc (390)", "Patriot Technology Services (462)", "Peleton Systems (249)", "Perssignia (382)", "Pete Gautreau/Vive Communications (373)", "Phillip Berta (295)", "Phone Check Inc (418)", "Princeton Hosted Solutions (311)", "Prospeed (396)", "RJR Communications LLC (343)", "Revolutionary Technologies (365)", "Rob Kilkowski (28)", "Robert Darcy (83)", "Rod MacKenzie (27)", "Rondilo (86)", "SAM - Penske (84)", "Sandler Partners (445)", "SchulzLB (269)", "Sean Kelly/CBE (50)", "Shane Senior (341)", "Sharon Lorino (65)", "Sherman Networks (113)", "SmartFiber (370)", "Spencer Hill Communications (278)", "Stephen DePaula (199)", "Steve Cho (40)", "Steve Gibbs (69)", "Steve Luke (43)", "Strategic Partners Communications, Inc (246)", "Syscom USA (308)", "Systems Engineering, Inc (359)", "TBI (395)", "TCC (58)", "TDS Inc (95)", "TJD Consulting (344)", "TeamLogicIT (366)", "TechChoice (364)", "Technology Source (452)", "Ted Lagala (227)", "Tel-Data Systems (374)", "Telarus (410)", "Telarus (OLD) (428)", "Telco Holdings, Inc. (394)", "Tele-Dynamics (75)", "Telecom Co-Op (456)", "Telecom Consultants, LLP (117)", "Teledomani (233)", "Telequest (80)", "Telosan (385)", "The Sagent Group (455)", "Tilden Associates (259)", "Titanium Communications (304)", "Top Cloud Partners, LLC (467)", "UPSTACK - DVP Tech (350)", "USTelecenters (425)", "United Telecom (53)", "Uptime Communications (369)", "ValuLink (371)", "Veripoint (59)", "Vive Communications (378)", "Votacall (106)", "Whitecap Technologies (335)", "World Radio Telecommunications (407)", "World Technologies Inc/Tom Duncan (4)", "World Telecom/Adam Walter (93)", "Zeus Communicaitons (285)", "allConnex - AmpliX (348)"];
 
 
+
+// ── Install state (declared early — used by both views) ──
+let selfInstall = {s: false, a: false};
 
 // ══ SHELL ════════════════════════════════════════════════════════════════
 const ADMIN_PW = 'nhcadmin2024';
@@ -688,9 +792,29 @@ function sRender() {
     const icbP = sTerm===12 ? s.icb12 : s.icb36;
     return effectiveMRC_s(s) < icbP - 0.001;
   });
-  const v = anyBelowICB
-    ? {label:'Needs review', cls:'v-bad', hcls:'hc-bad', tcls:'txt-bad', icon:'🚫', sub:'One or more seats priced below ICB — needs manager review.'}
-    : verdict(margin);
+  // Install impact
+  const sSites  = Math.max(1, parseInt((document.getElementById('s-sites')||{value:'1'}).value) || 1);
+  const sPhones = Math.max(1, parseInt((document.getElementById('s-phones')||{value:'5'}).value) || 1);
+  const sInstallTotal = getInstallCost('s');
+  const sDealRevenue  = d.totMRC * sTerm;
+  const sMarginAfterInstall = sDealRevenue > 0 ? (d.remaining - sInstallTotal) / sDealRevenue : 0;
+
+  // Margin-based verdicts — ICB does NOT override these
+  const vSpif    = verdict(margin);
+  const vInstall = verdict(sMarginAfterInstall);
+  const worstCls = (vInstall.cls==='v-bad' || vSpif.cls==='v-bad') ? 'v-bad'
+                 : (vInstall.cls==='v-agg' || vSpif.cls==='v-agg') ? 'v-agg' : 'v-good';
+  const vWorst = worstCls==='v-bad'
+    ? {label:'Needs review', cls:'v-bad', hcls:'hc-bad', tcls:'txt-bad', icon:'🚫',
+       sub: overallReason(margin, sMarginAfterInstall, sInstallTotal)}
+    : worstCls==='v-agg'
+    ? {label:'Aggressive', cls:'v-agg', hcls:'hc-agg', tcls:'txt-agg', icon:'💪',
+       sub: overallReason(margin, sMarginAfterInstall, sInstallTotal)}
+    : {label:'Healthy', cls:'v-good', hcls:'hc-good', tcls:'txt-good', icon:'✅',
+       sub: overallReason(margin, sMarginAfterInstall, sInstallTotal)};
+  const v = vWorst;
+  // ICB warning shown separately below the verdict
+  const sIcbWarn = icbWarning(anyBelowICB);
   const hasSeats = SEATS.some(s=>getQty_s(s.key)>0);
   document.getElementById('s-empty-panel').style.display = hasSeats?'none':'block';
   document.getElementById('s-health-panel').style.display = hasSeats?'block':'none';
@@ -700,6 +824,16 @@ function sRender() {
   const hVerd=document.getElementById('s-h-verdict');
   hVerd.textContent=v.label; hVerd.className='h-verdict '+v.tcls;
   document.getElementById('s-h-sub').textContent=v.sub;
+  // ICB warning — separate from margin verdict
+  let sIcbWarnEl = document.getElementById('s-icb-warn');
+  if (!sIcbWarnEl) {
+    sIcbWarnEl = document.createElement('div');
+    sIcbWarnEl.id = 's-icb-warn';
+    sIcbWarnEl.style.cssText = 'font-size:12px;color:var(--amber);margin-top:8px;display:flex;align-items:center;gap:6px;';
+    document.querySelector('.health-text').appendChild(sIcbWarnEl);
+  }
+  sIcbWarnEl.textContent = sIcbWarn;
+  sIcbWarnEl.style.display = sIcbWarn ? 'flex' : 'none';
   let totMRC2=0,totSeats2=0,totSPIF2=0;
   SEATS.forEach(s=>{ const q=getQty_s(s.key); if(!q)return; totMRC2+=effectiveMRC_s(s)*q; totSeats2+=q; totSPIF2+=effectiveMRC_s(s)*spifMult*q; });
   document.getElementById('s-deal-strip').innerHTML=`
@@ -707,7 +841,10 @@ function sRender() {
     <div class="strip-item"><div class="strip-lbl">Total seats</div><div class="strip-val">${totSeats2}</div></div>
     <div class="strip-item"><div class="strip-lbl">Term</div><div class="strip-val">${sTerm}m</div></div>
     <div class="strip-item"><div class="strip-lbl">SPIF payout</div><div class="strip-val">${fmt(totSPIF2)}</div></div>
-    <div class="strip-item"><div class="strip-lbl">Pricing</div><div class="strip-val" style="font-family:var(--font);font-size:14px">${sICB?'ICB':'Standard'}</div></div>
+    <div class="strip-item"><div class="strip-lbl">Pricing</div><div class="strip-val" style="font-family:var(--font);font-size:14px">${(()=>{
+      const hasCustom = SEATS.some(s => { const q=getQty_s(s.key); if(!q) return false; const v=parseFloat(document.getElementById('s-custom-'+s.key).value); return !isNaN(v)&&v>0&&Math.abs(v-bookMRC_s(s))>0.001; });
+      return hasCustom ? 'Custom' : sICB ? 'ICB' : 'Standard';
+    })()}</div></div>
   `;
   const active2=SEATS.filter(s=>getQty_s(s.key)>0);
   document.getElementById('s-seat-verdicts').innerHTML=active2.map(s=>{
@@ -722,13 +859,64 @@ function sRender() {
     const custom=isC?' <span style="font-size:10px;color:var(--accent)">(custom price)</span>':'';
     return `<div class="sv-row"><div class="sv-left"><div class="sv-name">${s.name}${custom}</div><div class="sv-detail">${q} seat${q>1?'s':''} &nbsp;&bull;&nbsp; ${fmt(effectiveMRC_s(s))}/seat</div></div><span class="badge ${sv.cls}">${sv.label}</span></div>`;
   }).join('');
-  const margins2=[3,4,5,6,7,8,9,10].map(m=>calcMargin_s(m));
-  const maxM=Math.max(...margins2,0.01);
-  document.getElementById('s-spif-rows').innerHTML=[3,4,5,6,7,8,9,10].map((m,i)=>{
-    const mg=margins2[i],sv=verdict(mg),sel=Math.abs(m-spifMult)<0.01;
+  // Install verdict row
+  const isSelfS = selfInstall['s'];
+  document.getElementById('s-install-verdict').innerHTML = isSelfS ? `
+    <div class="sv-row">
+      <div class="sv-left">
+        <div class="sv-name">Self install &mdash; ${sSites} site${sSites>1?'s':''}</div>
+        <div class="sv-detail">No install cost to NHC</div>
+      </div>
+      <span class="self-install-badge">✓ $0 cost</span>
+    </div>
+    <div class="sv-row" style="margin-top:4px;background:transparent;border:0.5px solid var(--border)">
+      <div class="sv-left">
+        <div class="sv-name" style="font-size:12px;color:var(--muted)">Deal verdict (no install cost)</div>
+      </div>
+      <span class="badge ${vSpif.cls}">${vSpif.label}</span>
+    </div>` : `
+    <div class="sv-row">
+      <div class="sv-left">
+        <div class="sv-name">Install impact &mdash; ${sSites} site${sSites>1?'s':''}, avg ${sPhones} phone${sPhones>1?'s':''}/site</div>
+        <div class="sv-detail">${laborHours(sPhones)} hr${laborHours(sPhones)>1?'s':''}/site &nbsp;&bull;&nbsp; ${sSites} site${sSites>1?'s':''} &nbsp;&bull;&nbsp; ${laborHours(sPhones)===1?'1–5':laborHours(sPhones)===2?'6–20':'21–50'} phones/site tier</div>
+      </div>
+      <span class="badge ${vInstall.cls}">${vInstall.label}</span>
+    </div>
+    ${vInstall.sub ? `<div style="font-size:11px;color:var(--muted);padding:6px 14px 0">${vInstall.sub}</div>` : ''}
+    <div class="sv-row" style="margin-top:8px;background:transparent;border:0.5px solid var(--border)">
+      <div class="sv-left">
+        <div class="sv-name" style="font-size:12px;color:var(--muted)">Without install</div>
+        ${vSpif.sub && vSpif.cls !== 'v-good' ? `<div class="sv-detail">${vSpif.sub}</div>` : ''}
+      </div>
+      <span class="badge ${vSpif.cls}">${vSpif.label}</span>
+    </div>`;
+
+  // SPIF rows — show both without-install and with-install verdicts
+  const hasInstall = sInstallTotal > 0;
+  const marginsNoInstall = [0,1,2,3,4,5,6,7,8,9,10].map(m=>{
+    const dd=calcDeal_s(m);
+    return sDealRevenue>0?dd.remaining/sDealRevenue:0;
+  });
+  const marginsWithInstall = [0,1,2,3,4,5,6,7,8,9,10].map(m=>{
+    const dd=calcDeal_s(m);
+    return sDealRevenue>0?(dd.remaining - sInstallTotal)/sDealRevenue:0;
+  });
+  const maxM=Math.max(...marginsNoInstall,0.01);
+  document.getElementById('s-spif-rows').innerHTML=[0,1,2,3,4,5,6,7,8,9,10].map((m,i)=>{
+    const mg=marginsNoInstall[i], mgI=marginsWithInstall[i];
+    const sv=verdict(mg), svI=verdict(mgI);
+    const sel=Math.abs(m-spifMult)<0.01;
     const pct2=Math.max(0,Math.min(100,(mg/maxM)*100));
     const bc=mg>=0.28?'var(--green)':mg>=0.25?'var(--blue)':'var(--red)';
-    return `<div class="spif-row${sel?' selected':''}"><span class="spif-mult-label">${m}x${sel?' ◀':''}</span><div class="spif-bar-wrap"><div class="spif-bar" style="width:${pct2}%;background:${bc}"></div></div><span class="badge ${sv.cls} spif-badge">${sv.label}</span></div>`;
+    const installBadge = hasInstall
+      ? `<span class="badge ${svI.cls} spif-badge" style="font-size:10px;opacity:0.75" title="After install">${svI.label} w/install</span>`
+      : '';
+    return `<div class="spif-row${sel?' selected':''}">
+      <span class="spif-mult-label">${m}x${sel?' ◀':''}</span>
+      <div class="spif-bar-wrap"><div class="spif-bar" style="width:${pct2}%;background:${bc}"></div></div>
+      <span class="badge ${sv.cls} spif-badge">${sv.label}</span>
+      ${installBadge}
+    </div>`;
   }).join('');
 
 }
@@ -827,22 +1015,59 @@ function aRender() {
     const icbP = aTerm===12 ? s.icb12 : s.icb36;
     return effectiveMRC_a(s) < icbP - 0.001;
   });
-  const v = anyBelowICB_a
-    ? {label:'Needs review', cls:'v-bad', hcls:'hc-bad', tcls:'txt-bad', icon:'🚫', sub:'One or more seats priced below ICB — needs manager review.'}
-    : verdict(d.marginAfterSpif);
+  // ── Install cost ──
+  const aSites  = Math.max(1, parseInt(document.getElementById('a-sites').value)  || 1);
+  const aPhones = Math.max(1, parseInt(document.getElementById('a-phones').value) || 1);
+  const aInstallTotal = getInstallCost('a');
+  const aHasInstall = aSites > 0 && aPhones > 0;
+
+  const dealRevenue = d.totMRC * aTerm;
+  const remainingAfterInstall = d.remaining - aInstallTotal;
+  const marginAfterInstall = dealRevenue > 0 ? remainingAfterInstall / dealRevenue : 0;
+
+  const vSpif    = verdict(d.marginAfterSpif);
+  const vInstall = verdict(marginAfterInstall);
+  // Enrich verdict labels with specific reasons for the summary cards
+  // Margin-based verdicts — ICB is a separate flag, not an override
+  const vSpifFinal = d.marginAfterSpif < 0.25
+    ? {...vSpif,   sub:'Margin after SPIF is ' + pct(d.marginAfterSpif) + ' — below the 25% threshold.'}
+    : d.marginAfterSpif < 0.28
+    ? {...vSpif,   sub:'Margin after SPIF is ' + pct(d.marginAfterSpif) + ' — between 25–28%.'}
+    : {...vSpif,   sub:'Margin after SPIF is ' + pct(d.marginAfterSpif) + '.'};
+  const vInstallFinal = marginAfterInstall < 0.25
+    ? {...vInstall, sub:'Install (' + fmt(aInstallTotal) + ') brings margin to ' + pct(marginAfterInstall) + ' — below 25%.'}
+    : marginAfterInstall < 0.28
+    ? {...vInstall, sub:'Install (' + fmt(aInstallTotal) + ') brings margin to ' + pct(marginAfterInstall) + ' — between 25–28%.'}
+    : {...vInstall, sub:'Margin after SPIF + install is ' + pct(marginAfterInstall) + '.'};
+  // ICB warning as a separate summary card if applicable
+  const aIcbWarn = icbWarning(anyBelowICB_a);
+
   let totComm=0; SEATS.forEach(s=>{ const q=getQty_a(s.key); if(q) totComm+=effectiveMRC_a(s)*aCommRate*q; });
   const summaryItems=[
-    {lbl:'Total MRC',val:fmt(d.totMRC)},
-    {lbl:'Deal revenue ('+aTerm+'m)',val:fmt(d.totMRC*aTerm)},
-    {lbl:'Commission/month',val:fmt(totComm)},
-    {lbl:'Deal profit after comm.',val:fmt(d.totProfit)},
-    {lbl:'SPIF payout ('+spifMult+'x)',val:fmt(d.totSpif)},
-    {lbl:'Remaining profit',val:fmt(d.remaining)},
-    {lbl:'Margin after comm.',val:pct(d.totMRC*aTerm>0?d.totProfit/(d.totMRC*aTerm):0)},
-    {lbl:'Margin after SPIF',val:pct(d.marginAfterSpif),verdict:v,key:true},
+    ...(aIcbWarn ? [{lbl:'Pricing flag', val:aIcbWarn, warn:true}] : []),
+    {lbl:'Total MRC',                          val:fmt(d.totMRC)},
+    {lbl:'Deal revenue ('+aTerm+'m)',           val:fmt(dealRevenue)},
+    {lbl:'Commission/month',                   val:fmt(totComm)},
+    {lbl:'Deal profit after comm.',            val:fmt(d.totProfit)},
+    {lbl:'SPIF payout ('+spifMult+'x)',        val:fmt(d.totSpif)},
+    {lbl:'Remaining after SPIF',               val:fmt(d.remaining)},
+    {lbl:'Install cost ('+aSites+' site'+(aSites>1?'s':'')+')', val:fmt(aInstallTotal), neg:true},
+    {lbl:'Remaining after install',            val:fmt(remainingAfterInstall)},
+    {lbl:'Margin after comm.',                 val:pct(dealRevenue>0?d.totProfit/dealRevenue:0)},
+    {lbl:'Margin after SPIF',                  val:pct(d.marginAfterSpif), verdict:vSpifFinal},
+    {lbl:'Margin after SPIF + install',        val:pct(marginAfterInstall), verdict:vInstallFinal, key:true},
   ];
   document.getElementById('a-summary-grid').innerHTML=summaryItems.map(c=>
-    `<div class="metric${c.key?' key-metric':''}"><div class="m-lbl">${c.lbl}</div><div class="m-val">${c.val}</div>${c.verdict?`<span class="badge ${c.verdict.cls} m-badge">${c.verdict.label}</span>`:''}</div>`
+    c.warn
+    ? `<div class="metric" style="border-color:var(--amber-border);grid-column:1/-1">
+        <div class="m-lbl">${c.lbl}</div>
+        <div class="m-val" style="font-size:13px;font-family:var(--font);color:var(--amber);line-height:1.5">${c.val}</div>
+       </div>`
+    : `<div class="metric${c.key?' key-metric':''}${c.neg?' style="border-color:var(--amber-border)"':''}">
+        <div class="m-lbl">${c.lbl}</div>
+        <div class="m-val" ${c.neg?'style="color:var(--amber)"':''}>${c.neg?'−':''}${c.val}</div>
+        ${c.verdict?`<span class="badge ${c.verdict.cls} m-badge">${c.verdict.label}</span>`:''}
+       </div>`
   ).join('');
 
   // ── Per-seat breakdown ──
@@ -871,10 +1096,23 @@ function aRender() {
   }
   // ── SPIF sensitivity ──
   const hasS=SEATS.some(s=>getQty_a(s.key)>0);
-  document.getElementById('a-spif-tbody').innerHTML=[3,4,5,6,7,8,9,10].map(m=>{
-    const dd=calcDeal_a(m),vv=verdict(dd.marginAfterSpif),sel=Math.abs(m-spifMult)<0.01;
-    return `<tr class="${sel?'spif-selected':''}"><td>${m}x${sel?' ◀':''}</td><td>${fmt(dd.totSpif)}</td><td>${fmt(dd.totProfit)}</td><td>${fmt(dd.remaining)}</td><td>${pct(dd.marginAfterSpif)}</td><td><span class="badge ${vv.cls}">${vv.label}</span></td></tr>`;
+  document.getElementById('a-spif-tbody').innerHTML=[0,1,2,3,4,5,6,7,8,9,10].map(m=>{
+    const dd=calcDeal_a(m);
+    const vv=verdict(dd.marginAfterSpif);
+    const mgI=dealRevenue>0?(dd.remaining-aInstallTotal)/dealRevenue:0;
+    const vvI=verdict(mgI);
+    const sel=Math.abs(m-spifMult)<0.01;
+    return `<tr class="${sel?'spif-selected':''}">
+      <td>${m}x${sel?' ◀':''}</td>
+      <td>${fmt(dd.totSpif)}</td>
+      <td>${fmt(dd.totProfit)}</td>
+      <td>${fmt(dd.remaining)}</td>
+      <td>${pct(dd.marginAfterSpif)}</td>
+      <td><span class="badge ${vv.cls}">${vv.label}</span></td>
+      ${aHasInstall ? `<td>${pct(mgI)}</td><td><span class="badge ${vvI.cls}">${vvI.label}</span></td>` : '<td>—</td><td>—</td>'}
+    </tr>`;
   }).join('');
+  // install cards updated via aRenderInstall -> aRender chain
 }
 
 // Partner handling for a
@@ -904,6 +1142,56 @@ function onATermChange() {
   updateBooks_a();
   aRender();
 })();
+
+
+// ── Install calculator ──────────────────────────────────────────────────
+function toggleSelfInstall(prefix) {
+  selfInstall[prefix] = !selfInstall[prefix];
+  const on = selfInstall[prefix];
+  document.getElementById(prefix+'-self-install-toggle').classList.toggle('on', on);
+  const lbl = document.getElementById(prefix+'-self-install-label');
+  lbl.textContent = on ? 'Customer self-installs — no cost to NHC' : 'NHC installs — enter sites & phones below';
+  lbl.classList.toggle('active', on);
+  document.getElementById(prefix+'-install-inputs').classList.toggle('install-disabled', on);
+  if (prefix === 's') sRender();
+  else aRenderInstall();
+}
+
+function getInstallCost(prefix) {
+  if (selfInstall[prefix]) return 0;
+  const sites  = Math.max(1, parseInt(document.getElementById(prefix+'-sites').value)  || 1);
+  const phones = Math.max(1, parseInt(document.getElementById(prefix+'-phones').value) || 1);
+  return (laborHours(phones) * 175 + 125) * sites;
+}
+
+function laborHours(phones) {
+  if (phones <= 5)  return 1;
+  if (phones <= 20) return 2;
+  return 4;
+}
+
+function aRenderInstall() {
+  const sites  = Math.max(1, parseInt(document.getElementById('a-sites').value)  || 1);
+  const phones = Math.max(1, parseInt(document.getElementById('a-phones').value) || 1);
+  const hrs    = laborHours(phones);
+  const labor  = hrs * 175;
+  const travel = 125;
+  const perSite = labor + travel;
+  const total  = perSite * sites;
+
+  const isSelf = selfInstall['a'];
+  document.getElementById('a-inst-hrs').textContent     = isSelf ? '—' : hrs + (hrs===1?' hr':' hrs');
+  document.getElementById('a-inst-labor').textContent   = isSelf ? '$0.00' : fmt(labor);
+  document.getElementById('a-inst-persite').textContent = isSelf ? '$0.00' : fmt(perSite);
+  document.getElementById('a-inst-sites').textContent   = sites;
+  document.getElementById('a-inst-total').textContent   = isSelf ? '$0.00' : fmt(total);
+  document.getElementById('a-inst-sub').textContent     = isSelf ? 'Customer self-install — no cost' : sites + ' site' + (sites>1?'s':'') + ' × ' + fmt(perSite);
+  // Refresh summary cards to reflect updated install impact
+  try { aRender(); } catch(e) {}
+}
+
+// Init install on load
+aRenderInstall();
 
 </script>
 </body>
