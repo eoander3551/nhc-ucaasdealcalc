@@ -548,17 +548,26 @@ const SEATS = [
 
 function fmt(n) { return '$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function pct(n) { return (n*100).toFixed(1)+'%'; }
+// Base verdict thresholds (used for overall deal and margin math)
 function verdict(m) {
   if (m < 0.25) return {label:'Needs review', cls:'v-bad',  hcls:'hc-bad',  tcls:'txt-bad',  icon:'🚫', sub:'This deal needs manager review before proceeding.'};
   if (m < 0.28) return {label:'Aggressive',   cls:'v-agg',  hcls:'hc-agg',  tcls:'txt-agg',  icon:'💪', sub:'Tight but approvable. Good for competitive situations.'};
   return              {label:'Healthy',       cls:'v-good', hcls:'hc-good', tcls:'txt-good', icon:'✅', sub:'This deal works. Go close it.'};
 }
 
-// CFM has $0 cost so margin math doesn't apply — verdict based on price vs rate card
+// CFM: $0 cost so verdict is purely price vs rate card
 function cfmVerdict(effectivePrice, stdPrice, icbPrice) {
-  if (effectivePrice >= stdPrice)  return {label:'Healthy',      cls:'v-good', hcls:'hc-good', tcls:'txt-good', icon:'✅', sub:'This deal works. Go close it.'};
-  if (effectivePrice >  icbPrice)  return {label:'Aggressive',   cls:'v-agg',  hcls:'hc-agg',  tcls:'txt-agg',  icon:'💪', sub:'Tight but approvable. Good for competitive situations.'};
-  return                                   {label:'Needs review', cls:'v-bad',  hcls:'hc-bad',  tcls:'txt-bad',  icon:'🚫', sub:'This deal needs manager review before proceeding.'};
+  if (effectivePrice >= stdPrice) return {label:'Healthy',      cls:'v-good', hcls:'hc-good', tcls:'txt-good', icon:'✅', sub:'This deal works. Go close it.'};
+  if (effectivePrice >  icbPrice) return {label:'Aggressive',   cls:'v-agg',  hcls:'hc-agg',  tcls:'txt-agg',  icon:'💪', sub:'Tight but approvable. Good for competitive situations.'};
+  return                                  {label:'Needs review', cls:'v-bad',  hcls:'hc-bad',  tcls:'txt-bad',  icon:'🚫', sub:'Priced below ICB — needs manager review.'};
+}
+
+// Per-seat verdict: ICB floor is a hard Needs Review regardless of margin math
+// If price is at or above ICB, margin math decides the verdict
+function seatVerdict(effectivePrice, icbPrice, marginAfterSpif) {
+  if (effectivePrice < icbPrice - 0.001)
+    return {label:'Needs review', cls:'v-bad', hcls:'hc-bad', tcls:'txt-bad', icon:'🚫', sub:'Priced below ICB — needs manager review.'};
+  return verdict(marginAfterSpif);
 }
 
 // Partner data
@@ -673,7 +682,15 @@ function sRender() {
 
   // ── Health panel ──
   const margin = d.marginAfterSpif;
-  const v = verdict(margin);
+  // If any active seat is priced below ICB, override the overall verdict
+  const anyBelowICB = SEATS.some(s => {
+    const q = getQty_s(s.key); if (!q) return false;
+    const icbP = sTerm===12 ? s.icb12 : s.icb36;
+    return effectiveMRC_s(s) < icbP - 0.001;
+  });
+  const v = anyBelowICB
+    ? {label:'Needs review', cls:'v-bad', hcls:'hc-bad', tcls:'txt-bad', icon:'🚫', sub:'One or more seats priced below ICB — needs manager review.'}
+    : verdict(margin);
   const hasSeats = SEATS.some(s=>getQty_s(s.key)>0);
   document.getElementById('s-empty-panel').style.display = hasSeats?'none':'block';
   document.getElementById('s-health-panel').style.display = hasSeats?'block':'none';
@@ -696,9 +713,10 @@ function sRender() {
   document.getElementById('s-seat-verdicts').innerHTML=active2.map(s=>{
     const q=getQty_s(s.key);
     const sm=calcSeatMargin_s(s,spifMult);
+    const sIcbPrice = sTerm===12 ? s.icb12 : s.icb36;
     const sv = (s.key==='cfm')
-      ? cfmVerdict(effectiveMRC_s(s), sTerm===12?s.std12:s.std36, sTerm===12?s.icb12:s.icb36)
-      : verdict(sm);
+      ? cfmVerdict(effectiveMRC_s(s), sTerm===12?s.std12:s.std36, sIcbPrice)
+      : seatVerdict(effectiveMRC_s(s), sIcbPrice, sm);
     const cval=parseFloat(document.getElementById('s-custom-'+s.key).value);
     const isC=!isNaN(cval)&&cval>0&&Math.abs(cval-bookMRC_s(s))>0.001;
     const custom=isC?' <span style="font-size:10px;color:var(--accent)">(custom price)</span>':'';
@@ -804,7 +822,14 @@ function aRender() {
   updateBooks_a();
 
   // ── Summary cards ──
-  const v = verdict(d.marginAfterSpif);
+  const anyBelowICB_a = SEATS.some(s => {
+    const q = getQty_a(s.key); if (!q) return false;
+    const icbP = aTerm===12 ? s.icb12 : s.icb36;
+    return effectiveMRC_a(s) < icbP - 0.001;
+  });
+  const v = anyBelowICB_a
+    ? {label:'Needs review', cls:'v-bad', hcls:'hc-bad', tcls:'txt-bad', icon:'🚫', sub:'One or more seats priced below ICB — needs manager review.'}
+    : verdict(d.marginAfterSpif);
   let totComm=0; SEATS.forEach(s=>{ const q=getQty_a(s.key); if(q) totComm+=effectiveMRC_a(s)*aCommRate*q; });
   const summaryItems=[
     {lbl:'Total MRC',val:fmt(d.totMRC)},
@@ -830,9 +855,10 @@ function aRender() {
       const q=getQty_a(s.key),m=effectiveMRC_a(s),comm=m*aCommRate,mp=m-s.cost-comm;
       const dp=mp*q*aTerm,sp=m*spifMult*q,rem=dp-sp;
       const mg=m*q*aTerm>0?rem/(m*q*aTerm):0;
+      const aIcbPrice = aTerm===12 ? s.icb12 : s.icb36;
       const vv = (s.key==='cfm')
-        ? cfmVerdict(effectiveMRC_a(s), aTerm===12?s.std12:s.std36, aTerm===12?s.icb12:s.icb36)
-        : verdict(mg);
+        ? cfmVerdict(effectiveMRC_a(s), aTerm===12?s.std12:s.std36, aIcbPrice)
+        : seatVerdict(effectiveMRC_a(s), aIcbPrice, mg);
       const cval=parseFloat(document.getElementById('a-custom-'+s.key).value);
       const isC=!isNaN(cval)&&cval>0&&Math.abs(cval-bookMRC_a(s))>0.001;
       const ct=isC?'<span class="custom-tag">custom</span>':'';
