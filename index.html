@@ -405,7 +405,7 @@ footer { margin-top:60px; padding-top:20px; border-top:0.5px solid var(--border)
   </div>
   <footer>
     <span>NHC UCaaS &nbsp;&bull;&nbsp; Hosted voice deal builder</span>
-    <span>28%+ healthy &nbsp;&bull;&nbsp; 25–28% aggressive &nbsp;&bull;&nbsp; &lt;25% needs review</span>
+    <span>28%+ healthy &nbsp;&bull;&nbsp; 25–28% aggressive &nbsp;&bull;&nbsp; 20–25% needs review &nbsp;&bull;&nbsp; &lt;20% bad deal</span>
   </footer>
 
   </div>
@@ -596,20 +596,25 @@ footer { margin-top:60px; padding-top:20px; border-top:0.5px solid var(--border)
   <div class="section">
     <div class="section-header">SPIF sensitivity — 0x through 10x — total deal</div>
     <div class="tbl-wrap">
-      <table>
+      <table style="font-size:11.5px">
         <thead><tr>
-          <th>Multiple</th><th>SPIF payout</th><th>Deal profit after comm.</th>
-          <th>Remaining after SPIF</th><th>Margin after SPIF</th><th>Verdict</th>
-          <th>Margin w/install</th><th>Verdict w/install</th>
+          <th style="width:7%">Multi.</th>
+          <th style="width:12%">SPIF payout</th>
+          <th style="width:14%">Remaining</th>
+          <th style="width:10%">Margin</th>
+          <th style="width:13%">Verdict</th>
+          <th style="width:14%">Remaining w/install</th>
+          <th style="width:10%">Margin w/install</th>
+          <th style="width:13%">Verdict w/install</th>
         </tr></thead>
-        <tbody id="a-spif-tbody"><tr><td colspan="6" class="empty-state">Set seat quantities above</td></tr></tbody>
+        <tbody id="a-spif-tbody"><tr><td colspan="8" class="empty-state">Set seat quantities above</td></tr></tbody>
       </table>
     </div>
   </div>
 
   <footer>
     <span>Commission rate: partner-specific &nbsp;&bull;&nbsp; CFM cost: $0</span>
-    <span>28%+ healthy &nbsp;&bull;&nbsp; 25–28% aggressive &nbsp;&bull;&nbsp; &lt;25% needs review</span>
+    <span>28%+ healthy &nbsp;&bull;&nbsp; 25–28% aggressive &nbsp;&bull;&nbsp; 20–25% needs review &nbsp;&bull;&nbsp; &lt;20% bad deal</span>
   </footer>
 
   </div>
@@ -629,9 +634,10 @@ function fmt(n) { return '$'+Math.abs(n).toLocaleString('en-US',{minimumFraction
 function pct(n) { return (n*100).toFixed(1)+'%'; }
 // Base verdict thresholds (used for overall deal and margin math)
 function verdict(m) {
-  if (m < 0.25) return {label:'Needs review', cls:'v-bad',  hcls:'hc-bad',  tcls:'txt-bad',  icon:'🚫', sub:'This deal needs manager review before proceeding.'};
-  if (m < 0.28) return {label:'Aggressive',   cls:'v-agg',  hcls:'hc-agg',  tcls:'txt-agg',  icon:'💪', sub:'Tight but approvable. Good for competitive situations.'};
-  return              {label:'Healthy',       cls:'v-good', hcls:'hc-good', tcls:'txt-good', icon:'✅', sub:'This deal works. Go close it.'};
+  if (m < 0.20) return {label:'Bad deal',     cls:'v-bad',   hcls:'hc-bad',   tcls:'txt-bad',   icon:'🚫', sub:'Margin is too low — this deal should not proceed.'};
+  if (m < 0.25) return {label:'Needs review', cls:'v-strat', hcls:'hc-strat', tcls:'txt-strat', icon:'⚠️',  sub:'Margin is tight — needs manager review before proceeding.'};
+  if (m < 0.28) return {label:'Aggressive',   cls:'v-agg',   hcls:'hc-agg',   tcls:'txt-agg',   icon:'💪', sub:'Tight but approvable. Good for competitive situations.'};
+  return              {label:'Healthy',       cls:'v-good',  hcls:'hc-good',  tcls:'txt-good',  icon:'✅', sub:'This deal works. Go close it.'};
 }
 
 // CFM: $0 cost so verdict is purely price vs rate card
@@ -642,13 +648,17 @@ function cfmVerdict(effectivePrice, stdPrice, icbPrice) {
 }
 
 // Builds a specific reason string for the overall deal banner
-function overallReason(marginSpif, marginInstall, installCost) {
+function overallReason(marginSpif, marginInstall, installCost, dealRevenue, showCost) {
   const reasons = [];
-  if (marginSpif < 0.25)  reasons.push('margin after SPIF is ' + pct(marginSpif));
-  else if (marginSpif < 0.28) reasons.push('margin after SPIF is ' + pct(marginSpif) + ' (aggressive)');
+  if (marginSpif < 0.20)  reasons.push('margin after SPIF is ' + pct(marginSpif) + ' — bad deal territory');
+  else if (marginSpif < 0.25) reasons.push('margin after SPIF is ' + pct(marginSpif) + ' — needs review');
+  else if (marginSpif < 0.28) reasons.push('margin after SPIF is ' + pct(marginSpif) + ' — aggressive');
   if (installCost > 0 && marginInstall < marginSpif) {
-    if (marginInstall < 0.25) reasons.push('install (' + fmt(installCost) + ') pushes margin to ' + pct(marginInstall));
-    else if (marginInstall < 0.28) reasons.push('install (' + fmt(installCost) + ') brings margin to ' + pct(marginInstall));
+    const tier = installImpactTier(installCost, dealRevenue);
+    const installDesc = showCost
+      ? 'install (' + fmt(installCost) + ') pushes margin to ' + pct(marginInstall)
+      : 'install impact is ' + (tier ? tier.label.toLowerCase() : '') + ' — pushes margin to ' + pct(marginInstall);
+    if (marginInstall < 0.28) reasons.push(installDesc);
   }
   if (reasons.length === 0) return 'Deal margin looks good.';
   return reasons.join('; ') + '.';
@@ -658,6 +668,16 @@ function icbWarning(anyBelowICB) {
   return anyBelowICB ? '⚠️ One or more seats priced below ICB — pricing approval required.' : '';
 }
 
+// Install impact tier based on install cost as % of total deal revenue
+function installImpactTier(installCost, dealRevenue) {
+  if (installCost <= 0 || dealRevenue <= 0) return null;
+  const pctOfRev = installCost / dealRevenue;
+  if (pctOfRev < 0.05)  return {label:'Low impact',      cls:'v-good',  icon:'✅', pct: pctOfRev, advice:'Install cost is a small portion of deal revenue — can be absorbed.'};
+  if (pctOfRev < 0.10)  return {label:'Medium impact',   cls:'v-agg',   icon:'💪', pct: pctOfRev, advice:'Consider passing install cost through or amortizing into MRC.'};
+  if (pctOfRev < 0.20)  return {label:'High impact',     cls:'v-strat', icon:'⚠️',  pct: pctOfRev, advice:'Install is a significant cost — recommend billing customer or adding to MRC.'};
+  return                       {label:'Excessive impact', cls:'v-bad',   icon:'🚫', pct: pctOfRev, advice:'Install cost is too large to absorb — must be amortized or customer-paid.'};
+}
+
 // Per-seat verdict: ICB floor is a hard Needs Review regardless of margin math
 // If price is at or above ICB, margin math decides the verdict
 function seatVerdict(effectivePrice, icbPrice, marginAfterSpif) {
@@ -665,7 +685,7 @@ function seatVerdict(effectivePrice, icbPrice, marginAfterSpif) {
   const belowICB = effectivePrice < icbPrice - 0.001;
   // Margin verdict drives the badge; ICB is shown as a sub-note
   if (v.cls === 'v-bad')
-    return {...v, sub:'Margin ' + pct(marginAfterSpif) + ' after comp & SPIF — below 25%.' + (belowICB ? ' Also below ICB (' + fmt(icbPrice) + ').' : '')};
+    return {...v, sub:'Margin ' + pct(marginAfterSpif) + ' after comp & SPIF' + (v.cls==='v-bad'?' — bad deal.':(v.cls==='v-strat'?' — needs review.':'.')) + (belowICB ? ' ⚠️ Below ICB (' + fmt(icbPrice) + ').' : '')};
   if (belowICB)
     return {...v, sub:(v.sub||'') + ' ⚠️ Below ICB (' + fmt(icbPrice) + ') — pricing approval needed.'};
   return v;
@@ -798,6 +818,7 @@ function sRender() {
   const sInstallTotal = getInstallCost('s');
   const sDealRevenue  = d.totMRC * sTerm;
   const sMarginAfterInstall = sDealRevenue > 0 ? (d.remaining - sInstallTotal) / sDealRevenue : 0;
+  const sInstallTier = installImpactTier(sInstallTotal, sDealRevenue);
 
   // Margin-based verdicts — ICB does NOT override these
   const vSpif    = verdict(margin);
@@ -806,12 +827,12 @@ function sRender() {
                  : (vInstall.cls==='v-agg' || vSpif.cls==='v-agg') ? 'v-agg' : 'v-good';
   const vWorst = worstCls==='v-bad'
     ? {label:'Needs review', cls:'v-bad', hcls:'hc-bad', tcls:'txt-bad', icon:'🚫',
-       sub: overallReason(margin, sMarginAfterInstall, sInstallTotal)}
+       sub: overallReason(margin, sMarginAfterInstall, sInstallTotal, sDealRevenue, false)}
     : worstCls==='v-agg'
     ? {label:'Aggressive', cls:'v-agg', hcls:'hc-agg', tcls:'txt-agg', icon:'💪',
-       sub: overallReason(margin, sMarginAfterInstall, sInstallTotal)}
+       sub: overallReason(margin, sMarginAfterInstall, sInstallTotal, sDealRevenue, false)}
     : {label:'Healthy', cls:'v-good', hcls:'hc-good', tcls:'txt-good', icon:'✅',
-       sub: overallReason(margin, sMarginAfterInstall, sInstallTotal)};
+       sub: overallReason(margin, sMarginAfterInstall, sInstallTotal, sDealRevenue, false)};
   const v = vWorst;
   // ICB warning shown separately below the verdict
   const sIcbWarn = icbWarning(anyBelowICB);
@@ -877,18 +898,23 @@ function sRender() {
     </div>` : `
     <div class="sv-row">
       <div class="sv-left">
-        <div class="sv-name">Install impact &mdash; ${sSites} site${sSites>1?'s':''}, avg ${sPhones} phone${sPhones>1?'s':''}/site</div>
-        <div class="sv-detail">${laborHours(sPhones)} hr${laborHours(sPhones)>1?'s':''}/site &nbsp;&bull;&nbsp; ${sSites} site${sSites>1?'s':''} &nbsp;&bull;&nbsp; ${laborHours(sPhones)===1?'1–5':laborHours(sPhones)===2?'6–20':'21–50'} phones/site tier</div>
+        <div class="sv-name">Install cost impact &mdash; ${sSites} site${sSites>1?'s':''}, avg ${sPhones} phone${sPhones>1?'s':''}/site</div>
+        <div class="sv-detail">${laborHours(sPhones)===1?'1–5':laborHours(sPhones)===2?'6–20':'21–50'} phones/site tier &nbsp;&bull;&nbsp; ${laborHours(sPhones)} hr${laborHours(sPhones)>1?'s':''}/site</div>
       </div>
-      <span class="badge ${vInstall.cls}">${vInstall.label}</span>
+      ${sInstallTier ? `<span class="badge ${sInstallTier.cls}">${sInstallTier.label}</span>` : ''}
     </div>
-    ${vInstall.sub ? `<div style="font-size:11px;color:var(--muted);padding:6px 14px 0">${vInstall.sub}</div>` : ''}
+    ${sInstallTier ? `<div style="font-size:11px;color:var(--muted);padding:6px 14px 4px">${sInstallTier.advice}</div>` : ''}
     <div class="sv-row" style="margin-top:8px;background:transparent;border:0.5px solid var(--border)">
       <div class="sv-left">
-        <div class="sv-name" style="font-size:12px;color:var(--muted)">Without install</div>
-        ${vSpif.sub && vSpif.cls !== 'v-good' ? `<div class="sv-detail">${vSpif.sub}</div>` : ''}
+        <div class="sv-name" style="font-size:12px;color:var(--muted)">Deal margin without install</div>
       </div>
       <span class="badge ${vSpif.cls}">${vSpif.label}</span>
+    </div>
+    <div class="sv-row" style="margin-top:4px;background:transparent;border:0.5px solid var(--border)">
+      <div class="sv-left">
+        <div class="sv-name" style="font-size:12px;color:var(--muted)">Deal margin with install</div>
+      </div>
+      <span class="badge ${vInstall.cls}">${vInstall.label}</span>
     </div>`;
 
   // SPIF rows — show both without-install and with-install verdicts
@@ -907,7 +933,7 @@ function sRender() {
     const sv=verdict(mg), svI=verdict(mgI);
     const sel=Math.abs(m-spifMult)<0.01;
     const pct2=Math.max(0,Math.min(100,(mg/maxM)*100));
-    const bc=mg>=0.28?'var(--green)':mg>=0.25?'var(--blue)':'var(--red)';
+    const bc=mg>=0.28?'var(--green)':mg>=0.25?'var(--blue)':mg>=0.20?'var(--amber)':'var(--red)';
     const installBadge = hasInstall
       ? `<span class="badge ${svI.cls} spif-badge" style="font-size:10px;opacity:0.75" title="After install">${svI.label} w/install</span>`
       : '';
@@ -1102,14 +1128,14 @@ function aRender() {
     const mgI=dealRevenue>0?(dd.remaining-aInstallTotal)/dealRevenue:0;
     const vvI=verdict(mgI);
     const sel=Math.abs(m-spifMult)<0.01;
+    const remWithInstall = dd.remaining - aInstallTotal;
     return `<tr class="${sel?'spif-selected':''}">
       <td>${m}x${sel?' ◀':''}</td>
       <td>${fmt(dd.totSpif)}</td>
-      <td>${fmt(dd.totProfit)}</td>
       <td>${fmt(dd.remaining)}</td>
       <td>${pct(dd.marginAfterSpif)}</td>
       <td><span class="badge ${vv.cls}">${vv.label}</span></td>
-      ${aHasInstall ? `<td>${pct(mgI)}</td><td><span class="badge ${vvI.cls}">${vvI.label}</span></td>` : '<td>—</td><td>—</td>'}
+      ${aHasInstall ? `<td>${fmt(remWithInstall)}</td><td>${pct(mgI)}</td><td><span class="badge ${vvI.cls}">${vvI.label}</span></td>` : '<td>—</td><td>—</td><td>—</td>'}
     </tr>`;
   }).join('');
   // install cards updated via aRenderInstall -> aRender chain
